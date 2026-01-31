@@ -24,7 +24,16 @@ Assets/
     ├── Quest/                 # Quest tracking & objectives system
     ├── Input/                 # Rebindable input management
     ├── Achievement/           # Achievement tracking & rewards
-    └── ProceduralGeneration/  # Procedural content generation utilities
+    ├── ProceduralGeneration/  # Procedural content generation utilities
+    └── RPG/                   # Complete RPG & JRPG systems
+        ├── CharacterStatsSystem  # Comprehensive stats, attributes, leveling
+        ├── CombatSystem          # Turn-based, ATB, real-time combat
+        ├── PartySystem           # Party management, formations, synergies
+        ├── ClassSystem           # Job/class changing, skill trees
+        ├── CraftingSystem        # Recipes, professions, quality tiers
+        ├── RelationshipSystem    # Social links, romance, factions
+        ├── SkillSystem           # Skill learning, inheritance, cooldowns
+        └── SummonSystem          # Monster taming, evolution, summoning
 ```
 
 ## 🚀 Quick Start
@@ -677,6 +686,319 @@ var patterns = new List<WaveFunctionCollapse.TilePattern>
 int[,] generatedMap = WaveFunctionCollapse.Generate(
     width: 50, height: 50, patterns: patterns, seed: 12345
 );
+```
+
+---
+
+### RPG Systems
+
+The RPG module provides a complete set of interconnected systems for building deep RPG and JRPG games.
+
+#### CharacterStatsSystem
+Comprehensive character stats with primary attributes, derived stats, modifiers, and experience/leveling.
+```csharp
+var statsSystem = GetComponent<CharacterStatsSystem>();
+
+// Get attributes and derived stats
+float strength = statsSystem.GetAttribute(PrimaryAttribute.Strength);
+float maxHP = statsSystem.GetDerivedStat(DerivedStat.MaxHealth);
+float critChance = statsSystem.GetDerivedStat(DerivedStat.CriticalChance);
+
+// Allocate attribute points on level up
+statsSystem.AllocateAttributePoint(PrimaryAttribute.Strength, 3);
+
+// Add temporary stat modifiers (buffs/debuffs)
+var strengthBuff = new StatModifier("str_buff", "Power Potion", ModifierType.PercentAdd, 25f, 60f);
+statsSystem.AddAttributeModifier(PrimaryAttribute.Strength, strengthBuff);
+
+// Modify resources
+statsSystem.ModifyHealth(-50f);  // Take damage
+statsSystem.ModifyMana(-30f);    // Cast spell
+statsSystem.FullRestore();       // Full heal
+
+// Experience and leveling
+statsSystem.AddExperience(1000);
+Debug.Log($"Level: {statsSystem.Level}, EXP: {statsSystem.CurrentExperience}/{statsSystem.ExperienceToNextLevel}");
+
+// Events
+statsSystem.OnLevelUp += (prevLevel, newLevel) => Debug.Log($"Level Up! {prevLevel} -> {newLevel}");
+statsSystem.OnDeath += () => Debug.Log("Character died!");
+```
+
+#### CombatSystem
+Complete combat system supporting turn-based, Active Time Battle (ATB), and real-time combat.
+```csharp
+// Start combat encounter
+CombatSystem.Instance.StartCombat(partyMembers, enemies);
+
+// Execute actions in turn-based mode
+var action = new CombatAction { 
+    actionType = CombatActionType.Skill,
+    damageType = DamageType.Fire,
+    basePower = 1.5f 
+};
+CombatResult result = CombatSystem.Instance.ExecuteAction(action, targets);
+
+// Access combo system for action RPG
+CombatSystem.Instance.Combo.AddHit("slash");
+float comboMultiplier = CombatSystem.Instance.Combo.CurrentMultiplier;
+
+// Check elemental weaknesses
+float multiplier = ElementalSystem.GetElementalMultiplier(DamageType.Fire, DamageType.Ice);  // 2x damage
+
+// Limit Break system
+var limitBreak = new LimitBreakSystem();
+limitBreak.OnDealtDamage(100f, wasCritical: true);
+if (limitBreak.IsReady)
+{
+    limitBreak.UseLimit();  // Execute ultimate attack
+}
+
+// Events
+CombatSystem.Instance.OnCombatStart += () => Debug.Log("Battle Start!");
+CombatSystem.Instance.OnTurnStart += turn => Debug.Log($"{turn.combatant.CombatantName}'s turn");
+CombatSystem.Instance.OnCombatantDied += combatant => Debug.Log($"{combatant.CombatantName} was defeated!");
+```
+
+#### PartySystem
+JRPG-style party management with formations, AI behaviors, and combo attacks.
+```csharp
+// Add party members
+var warrior = new PartyMember("Cloud", "Warrior");
+PartySystem.Instance.AddMember(warrior);
+
+// Manage active party and reserves
+PartySystem.Instance.AddToActiveParty(warrior);
+PartySystem.Instance.SwapMembers(activeWarrior, reserveMage);
+PartySystem.Instance.SetLeader(warrior);
+
+// Formation and battle row
+PartySystem.Instance.SetFormationPosition(warrior, FormationPosition.FrontLeft);
+PartySystem.Instance.SetBattleRow(warrior, BattleRow.Front);
+PartySystem.Instance.AutoFormation();  // Auto-arrange by class roles
+float damageMultiplier = PartySystem.Instance.GetRowDamageMultiplier(warrior);
+
+// AI behavior for party members
+PartySystem.Instance.SetAIBehavior(mage, PartyAIBehavior.Support);
+var recommendedAction = PartySystem.Instance.GetAIRecommendedAction(mage, allies, enemies);
+
+// Party synergies (bonus effects from party composition)
+float attackBonus = PartySystem.Instance.GetSynergyBonus("attack");
+List<ComboAttack> combos = PartySystem.Instance.GetAvailableComboAttacks();
+PartySystem.Instance.ExecuteComboAttack(combos[0], target);
+
+// Trust and relationship between members
+PartySystem.Instance.IncreaseTrust(warrior, 10);
+PartySystem.Instance.DistributeExperience(1000);
+
+// Events
+PartySystem.Instance.OnMemberKnockedOut += member => QuickSwapKnockedOut(member);
+PartySystem.Instance.OnComboAttackAvailable += combo => Debug.Log($"Combo ready: {combo.comboName}");
+```
+
+#### ClassSystem
+Job/class system with multiclassing, skill trees, and class mastery.
+```csharp
+var classSystem = GetComponent<ClassSystem>();
+
+// Change class
+classSystem.ChangeClass("warrior");
+classSystem.SetSecondaryClass("mage");  // Dual-class
+
+// Class progression
+classSystem.AddClassExperience(500);
+int classLevel = classSystem.GetClassLevel("warrior");
+bool isMastered = classSystem.IsClassMastered("warrior");
+
+// Learn and manage skills
+classSystem.LearnSkill("power_strike");
+classSystem.EquipPassive("counter_attack");
+bool hasSkill = classSystem.HasSkill("fireball");
+
+// Skill inheritance from mastered classes
+classSystem.InheritSkill("heal");  // Use healer skill as warrior
+var inheritedSkills = classSystem.GetInheritedSkills();
+
+// Check class requirements
+bool canUnlock = classSystem.CanUnlockClass("paladin");
+var requirements = classSystem.GetUnmetRequirements("dark_knight");
+
+// Skill tree visualization
+SkillTree tree = classSystem.GetSkillTree("warrior");
+var tierNodes = tree.GetNodesAtTier(2);
+
+// Respec
+classSystem.RespecClass("warrior");  // Reset all skill points
+
+// Events
+classSystem.OnClassChanged += (old, current) => Debug.Log($"Changed from {old.className} to {current.className}");
+classSystem.OnSkillLearned += skill => Debug.Log($"Learned {skill.skillName}!");
+```
+
+#### CraftingSystem
+Complete crafting with multiple professions, recipes, quality tiers, and discovery.
+```csharp
+// Set up crafting station
+CraftingSystem.Instance.SetStation(blacksmithStation);
+
+// Learn and craft recipes
+CraftingSystem.Instance.LearnRecipe("iron_sword");
+CraftingResult result = CraftingSystem.Instance.CraftItem("iron_sword", quantity: 3);
+Debug.Log($"Crafted {result.quality} quality items. Exp gained: {result.experienceGained}");
+
+// Check craftable recipes
+var craftable = CraftingSystem.Instance.GetCraftableRecipes(CraftingProfession.Blacksmithing);
+var almostCraftable = CraftingSystem.Instance.GetAlmostCraftableRecipes(CraftingProfession.Alchemy, maxMissing: 2);
+
+// Queue crafting
+CraftingSystem.Instance.AddToQueue("health_potion", 10);
+CraftingSystem.Instance.PauseCrafting();
+CraftingSystem.Instance.ResumeCrafting();
+
+// Profession leveling
+int level = CraftingSystem.Instance.GetProfessionLevel(CraftingProfession.Alchemy);
+var progress = CraftingSystem.Instance.GetProfessionProgress(CraftingProfession.Alchemy);
+
+// Connect to inventory
+CraftingSystem.Instance.GetMaterialCount = itemId => InventorySystem.Instance.GetItemCount(GetItemData(itemId));
+CraftingSystem.Instance.ConsumeMaterial = (itemId, qty) => InventorySystem.Instance.RemoveItem(GetItemData(itemId), qty);
+CraftingSystem.Instance.AddItem = (itemId, qty) => InventorySystem.Instance.AddItem(GetItemData(itemId), qty);
+
+// Events
+CraftingSystem.Instance.OnCraftingComplete += result => {
+    if (result.wasCritical) Debug.Log("Critical craft! Bonus items received!");
+};
+CraftingSystem.Instance.OnRecipeDiscovered += recipe => Debug.Log($"Discovered: {recipe.recipeName}!");
+```
+
+#### RelationshipSystem
+Social links, romance, gifts, and faction reputation for deep NPC relationships.
+```csharp
+// Build affinity with characters
+RelationshipSystem.Instance.IncreaseAffinity("aerith", 15, InteractionType.Talk);
+var relationship = RelationshipSystem.Instance.GetRelationshipType("aerith");  // Friend, CloseFriend, etc.
+
+// Gift system with preferences
+int affinityGained = RelationshipSystem.Instance.GiveGift("aerith", "flowers", "gift");
+var recommendations = RelationshipSystem.Instance.GetGiftRecommendations("aerith");
+var toAvoid = RelationshipSystem.Instance.GetGiftsToAvoid("aerith");
+
+// Romance system
+RelationshipSystem.Instance.StartRomance("aerith");
+RelationshipSystem.Instance.Propose();
+RelationshipSystem.Instance.GetMarried();
+var romanceProgress = RelationshipSystem.Instance.GetRomanceProgress("aerith");
+
+// Social events (Persona-style)
+var availableEvents = RelationshipSystem.Instance.GetAvailableEvents("aerith");
+var evt = RelationshipSystem.Instance.TriggerEvent("aerith_rank_5");
+RelationshipSystem.Instance.CompleteEvent("aerith_rank_5", choiceIndex: 2);
+
+// Faction reputation
+RelationshipSystem.Instance.ModifyFactionReputation("knights_guild", 100);
+FactionStanding standing = RelationshipSystem.Instance.GetFactionStanding("knights_guild");
+var unlockedRewards = RelationshipSystem.Instance.GetUnlockedFactionRewards("knights_guild");
+
+// Daily system
+RelationshipSystem.Instance.OnNewDay("01/15");  // Reset daily limits, apply decay
+
+// Events
+RelationshipSystem.Instance.OnRankUp += (charId, rank) => Debug.Log($"{charId} rank up to {rank}!");
+RelationshipSystem.Instance.OnFactionStandingChanged += (faction, standing) => Debug.Log($"{faction}: {standing}");
+```
+
+#### SkillSystem
+Comprehensive skill management with learning, leveling, inheritance, and cooldowns.
+```csharp
+var skillSystem = GetComponent<SkillSystem>();
+
+// Learn and upgrade skills
+skillSystem.LearnSkill("fireball");
+skillSystem.UpgradeSkill("fireball");  // Uses skill points
+skillSystem.AddSkillExperience("fireball", 100);
+
+// Equip skills
+skillSystem.EquipSkill("fireball", slotIndex: 0);
+skillSystem.EquipPassive("magic_boost");
+skillSystem.SwapSkillSlots(0, 2);
+
+// Use skills
+if (skillSystem.CanUseSkill("fireball", out string reason))
+{
+    skillSystem.UseSkill("fireball");
+}
+
+// Skill cooldowns
+bool onCooldown = skillSystem.IsOnCooldown("fireball");
+float remaining = skillSystem.GetCooldownRemaining("fireball");
+skillSystem.ReduceCooldown("fireball", 2f);
+skillSystem.ResetAllCooldowns();
+
+// Skill inheritance from other classes
+skillSystem.InheritSkill("heal");
+var inherited = skillSystem.GetInheritedSkills();
+
+// Manage skill points
+skillSystem.AddSkillPoints(5);
+skillSystem.RespecSkills();  // Full respec
+
+// Events
+skillSystem.OnSkillLearned += skill => Debug.Log($"Learned {skill.skillData.skillName}!");
+skillSystem.OnSkillUsed += skillId => Debug.Log($"Used {skillId}");
+```
+
+#### SummonSystem
+Monster taming, evolution, and summoning system (Pokémon/SMT-style).
+```csharp
+// Capture monsters
+bool captured = SummonSystem.Instance.AttemptCapture(slimeData, currentHPPercent: 0.2f, hasStatusEffect: true);
+
+// Party management
+SummonSystem.Instance.MoveToParty(monster.instanceId);
+SummonSystem.Instance.SwapMonsters(partyMonsterId, storageMonsterId);
+SummonSystem.Instance.ReorderParty(0, 2);
+
+// Summon monsters in battle
+SummonSystem.Instance.SummonMonster(monster.instanceId, position);
+SummonSystem.Instance.RecallSummon(monster.instanceId);
+SummonSystem.Instance.SwapSummon(activeId, replacementId);
+
+// Monster progression
+monster.AddExperience(500);
+monster.LearnSkill("fire_breath");
+monster.AddBondPoints(10);  // Increase bond through interaction
+
+// Evolution
+if (SummonSystem.Instance.CanEvolve(monster.instanceId, out EvolutionPath evolution))
+{
+    SummonSystem.Instance.EvolveMonster(monster.instanceId, evolution.evolutionId);
+}
+
+// Monster stats
+float attack = monster.GetAttack();
+float defense = monster.GetDefense();
+float bondMultiplier = monster.GetBondMultiplier();  // Higher bond = better stats
+
+// Interact with monsters
+SummonSystem.Instance.Interact(monster.instanceId, "pet");
+SummonSystem.Instance.Interact(monster.instanceId, "feed");
+SummonSystem.Instance.RenameMonster(monster.instanceId, "Sparky");
+
+// Healing
+monster.Heal(50f);
+monster.Revive(0.5f);
+SummonSystem.Instance.HealAllParty();
+
+// Experience distribution
+SummonSystem.Instance.DistributeExperience(1000, participantIds);
+
+// Statistics
+int uniqueSpecies = SummonSystem.Instance.GetUniqueSpeciesCount();
+var captureStats = SummonSystem.Instance.GetCaptureStatistics();
+
+// Events
+SummonSystem.Instance.OnMonsterCaptured += monster => Debug.Log($"Captured {monster.nickname}!");
+SummonSystem.Instance.OnMonsterEvolved += (monster, evo) => Debug.Log($"Evolved into {evo.evolvedMonsterName}!");
 ```
 
 ---
