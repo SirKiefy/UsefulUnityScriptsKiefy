@@ -7,18 +7,24 @@ A collection of useful, reusable Unity scripts ranging from simple utilities to 
 ```
 Assets/
 └── Scripts/
-    ├── Core/           # Core systems (Singleton, GameManager)
-    ├── Utilities/      # Helper utilities (Timer, Tween, MathUtils)
-    ├── Player/         # Player controllers & health system
-    ├── Camera/         # Camera follow & shake systems
-    ├── UI/             # UI management & transitions
-    ├── Audio/          # Audio management system
-    ├── SaveSystem/     # Save/Load functionality
-    ├── Events/         # Event management system
-    ├── StateMachine/   # Finite state machine implementation
-    ├── Dialogue/       # Dialogue system with choices
-    ├── Pooling/        # Object pooling system
-    └── Extensions/     # C# extension methods
+    ├── Core/                  # Core systems (Singleton, GameManager)
+    ├── Utilities/             # Helper utilities (Timer, Tween, MathUtils)
+    ├── Player/                # Player controllers & health system
+    ├── Camera/                # Camera follow & shake systems
+    ├── UI/                    # UI management & transitions
+    ├── Audio/                 # Audio management system
+    ├── SaveSystem/            # Save/Load functionality
+    ├── Events/                # Event management system
+    ├── StateMachine/          # Finite state machine implementation
+    ├── Dialogue/              # Dialogue system with choices
+    ├── Pooling/               # Object pooling system
+    ├── Extensions/            # C# extension methods
+    ├── Inventory/             # Complete inventory & equipment system
+    ├── Abilities/             # Ability system with cooldowns & status effects
+    ├── Quest/                 # Quest tracking & objectives system
+    ├── Input/                 # Rebindable input management
+    ├── Achievement/           # Achievement tracking & rewards
+    └── ProceduralGeneration/  # Procedural content generation utilities
 ```
 
 ## 🚀 Quick Start
@@ -308,6 +314,369 @@ float remapped = value.Remap(0, 100, 0, 1);
 Color faded = color.WithAlpha(0.5f);
 var random = myList.GetRandom();
 myList.Shuffle();
+```
+
+---
+
+### Inventory System
+
+#### InventorySystem
+Complete inventory management with slots, stacking, equipment, and item management.
+```csharp
+// Add items
+int overflow = InventorySystem.Instance.AddItem(swordData, 1);
+
+// Remove items
+InventorySystem.Instance.RemoveItem(potionData, 5);
+
+// Check inventory
+bool hasItem = InventorySystem.Instance.HasItem(keyData, 1);
+int count = InventorySystem.Instance.GetItemCount(goldData);
+
+// Move items between slots
+InventorySystem.Instance.MoveItem(fromSlot: 0, toSlot: 5);
+
+// Equipment
+InventorySystem.Instance.EquipItem(slotIndex: 3);
+InventorySystem.Instance.UnequipItem(EquipmentSlot.MainHand);
+
+// Get equipment stats
+var stats = InventorySystem.Instance.GetEquipmentStats();
+
+// Use consumables
+InventorySystem.Instance.UseItem(slotIndex: 2);
+
+// Sort inventory
+InventorySystem.Instance.SortInventory(SortCriteria.Rarity);
+
+// Events
+InventorySystem.Instance.OnItemAdded += (item, slot) => { };
+InventorySystem.Instance.OnItemEquipped += (item, slot) => { };
+```
+
+#### ItemData (ScriptableObject)
+Define items with properties, stats, and consumable effects.
+- Stackable items with max stack sizes
+- Item types (Weapon, Armor, Consumable, Material, etc.)
+- Rarity levels (Common to Mythic)
+- Equipment slots and stat bonuses
+- Consumable effects with cooldowns
+
+---
+
+### Ability System
+
+#### AbilitySystem
+Complete ability/skill system with cooldowns, casting, and status effects.
+```csharp
+var abilitySystem = GetComponent<AbilitySystem>();
+
+// Use abilities
+abilitySystem.UseAbility(fireballAbility, targetPosition);
+abilitySystem.UseAbilityById("fireball", targetPosition);
+
+// Check ability state
+bool canUse = abilitySystem.CanUseAbility(ability);
+bool onCooldown = abilitySystem.IsOnCooldown("fireball");
+float cdRemaining = abilitySystem.GetCooldownRemaining("fireball");
+
+// Status effects
+abilitySystem.ApplyEffect(new StatusEffect("burn", "Burning", EffectType.DamageOverTime, 5f, 3f, true));
+abilitySystem.Cleanse(); // Remove all debuffs
+abilitySystem.Dispel();  // Remove all buffs
+
+// Check status
+bool stunned = abilitySystem.IsStunned();
+bool silenced = abilitySystem.IsSilenced();
+float speedMod = abilitySystem.GetSpeedMultiplier();
+
+// Resource management
+abilitySystem.RestoreMana(50f);
+abilitySystem.ConsumeMana(25f);
+
+// Learn/forget abilities
+abilitySystem.LearnAbility(newAbility);
+abilitySystem.ForgetAbility(oldAbility);
+
+// Events
+abilitySystem.OnAbilityUsed += ability => { };
+abilitySystem.OnEffectApplied += effect => { };
+abilitySystem.OnManaChanged += (current, max) => { };
+```
+
+#### AbilityData (ScriptableObject)
+Define abilities with:
+- Cooldowns, mana/stamina costs
+- Cast times with cancellation options
+- Targeting (Self, Single, AoE, Directional, Projectile)
+- Multiple effects (damage, healing, crowd control, buffs/debuffs)
+- Audio/visual feedback
+
+---
+
+### Quest System
+
+#### QuestSystem
+Complete quest tracking with objectives, rewards, and progress.
+```csharp
+// Accept quests
+QuestSystem.Instance.AcceptQuest(mainQuest);
+bool canAccept = QuestSystem.Instance.CanAcceptQuest(sideQuest);
+
+// Update progress
+QuestSystem.Instance.UpdateObjective(ObjectiveType.Kill, "goblin", 1);
+QuestSystem.Instance.UpdateObjectiveProgress(questId, objectiveId, 5);
+
+// Complete quests
+QuestSystem.Instance.CompleteQuest(questId);
+var readyQuests = QuestSystem.Instance.GetReadyToCompleteQuests();
+
+// Manage quests
+QuestSystem.Instance.AbandonQuest(questId);
+QuestSystem.Instance.TrackQuest(questId);
+var tracked = QuestSystem.Instance.TrackedQuest;
+
+// Query quests
+var activeQuests = QuestSystem.Instance.GetActiveQuests();
+var availableQuests = QuestSystem.Instance.GetAvailableQuests();
+bool isComplete = QuestSystem.Instance.IsQuestCompleted(questId);
+
+// Stats
+var stats = QuestSystem.Instance.GetQuestStats();
+
+// Events
+QuestSystem.Instance.OnQuestAccepted += quest => { };
+QuestSystem.Instance.OnQuestCompleted += quest => { };
+QuestSystem.Instance.OnObjectiveProgress += (quest, objId, current, max) => { };
+```
+
+#### QuestData (ScriptableObject)
+Define quests with:
+- Multiple objective types (Kill, Collect, Talk, Explore, Craft, etc.)
+- Prerequisites and level requirements
+- Rewards (XP, currency, items)
+- Time limits and failure conditions
+- Repeatable quests with cooldowns
+
+---
+
+### Input System
+
+#### InputManager
+Rebindable input system with gamepad support and input contexts.
+```csharp
+// Check input
+bool pressed = InputManager.Instance.IsPressed("Jump");
+bool justPressed = InputManager.Instance.WasJustPressed("Attack");
+bool held = InputManager.Instance.IsHeld("Crouch");
+float holdTime = InputManager.Instance.GetHoldDuration("Charge");
+
+// Axes
+float horizontal = InputManager.Instance.GetAxis("Horizontal");
+Vector2 movement = InputManager.Instance.GetMovementInput();
+Vector2 mouseDelta = InputManager.Instance.GetMouseDelta();
+
+// Rebinding
+InputManager.Instance.StartRebind("Jump", primary: true);
+InputManager.Instance.CancelRebind();
+InputManager.Instance.ResetBinding("Jump");
+InputManager.Instance.ResetAllBindings();
+
+// Settings
+InputManager.Instance.MouseSensitivity = 1.5f;
+InputManager.Instance.InvertMouseY = true;
+InputManager.Instance.GamepadSensitivity = 1.2f;
+
+// Input contexts (for different game states)
+InputManager.Instance.PushContext(new InputContext("UI", "User Interface", priority: 10));
+InputManager.Instance.PopContext("UI");
+
+// Save/Load bindings
+InputManager.Instance.SaveBindings();
+InputManager.Instance.LoadBindings();
+
+// Events
+InputManager.Instance.OnActionPressed += actionId => { };
+InputManager.Instance.OnActionDoubleTapped += actionId => { };
+InputManager.Instance.OnRebindComplete += (actionId, newKey) => { };
+InputManager.Instance.OnInputDeviceChanged += device => { };
+```
+
+---
+
+### Achievement System
+
+#### AchievementSystem
+Complete achievement tracking with progress, rewards, and notifications.
+```csharp
+// Progress tracking
+AchievementSystem.Instance.ReportProgress("kill_100_enemies", 1);
+AchievementSystem.Instance.SetProgress("collect_coins", 50);
+
+// Direct unlock
+AchievementSystem.Instance.UnlockAchievement("first_blood");
+
+// Stats tracking (auto-checks achievements)
+AchievementSystem.Instance.IncrementStat(ConditionType.TotalKills, 1);
+AchievementSystem.Instance.UpdateStat(ConditionType.MaxLevel, 10);
+
+// Query achievements
+var allAchievements = AchievementSystem.Instance.GetAllAchievements();
+var unlocked = AchievementSystem.Instance.GetUnlockedAchievements();
+var nearComplete = AchievementSystem.Instance.GetNearlyCompleteAchievements(5, 0.75f);
+var recentlyUnlocked = AchievementSystem.Instance.GetRecentlyUnlocked(5);
+bool isUnlocked = AchievementSystem.Instance.IsUnlocked("achievement_id");
+float progress = AchievementSystem.Instance.GetProgressPercentage("achievement_id");
+
+// Summary
+var summary = AchievementSystem.Instance.GetSummary();
+Debug.Log($"Completed: {summary.CompletionPercentage}%");
+Debug.Log($"Total Points: {summary.TotalPoints}");
+
+// Save/Load
+AchievementSystem.Instance.SaveProgress();
+AchievementSystem.Instance.LoadProgress();
+
+// Events
+AchievementSystem.Instance.OnAchievementUnlocked += achievement => { };
+AchievementSystem.Instance.OnAchievementProgress += (achievement, current, max) => { };
+AchievementSystem.Instance.OnNotificationStart += achievement => { };
+```
+
+#### AchievementData (ScriptableObject)
+Define achievements with:
+- Categories and rarity levels
+- Progress tracking (single, cumulative, milestone)
+- Multiple unlock conditions
+- Rewards (points, currency, items, unlockables)
+- Hidden/secret achievements
+
+---
+
+### Procedural Generation
+
+#### NoiseGenerator
+Noise generation utilities for procedural content.
+```csharp
+// Perlin noise map
+float[,] heightMap = NoiseGenerator.GeneratePerlinNoiseMap(
+    width: 256, height: 256, scale: 50f,
+    octaves: 4, persistence: 0.5f, lacunarity: 2f,
+    offset: Vector2.zero, seed: 12345
+);
+
+// Ridged noise (for mountains)
+float[,] ridgedMap = NoiseGenerator.GenerateRidgedNoise(
+    256, 256, 50f, 4, 0.5f, 2f, Vector2.zero, 12345
+);
+
+// Worley/cellular noise (for cells, caves)
+float[,] worleyMap = NoiseGenerator.GenerateWorleyNoise(
+    256, 256, numPoints: 50, seed: 12345, invert: false
+);
+
+// Sample noise at a point
+float value = NoiseGenerator.SimplexNoise(x, y, z);
+```
+
+#### DungeonGenerator
+Multiple dungeon generation algorithms.
+```csharp
+// BSP (Binary Space Partitioning) dungeon
+DungeonData dungeon = DungeonGenerator.GenerateBSPDungeon(
+    width: 100, height: 100,
+    minRoomSize: 6, maxRoomSize: 15,
+    numIterations: 5, seed: 12345
+);
+
+// Random walk dungeon
+DungeonData caveDungeon = DungeonGenerator.GenerateRandomWalkDungeon(
+    width: 100, height: 100,
+    walkLength: 500, numWalkers: 10, seed: 12345
+);
+
+// Cellular automata cave
+DungeonData cave = DungeonGenerator.GenerateCaveDungeon(
+    width: 100, height: 100,
+    fillProbability: 0.45f, smoothIterations: 5, seed: 12345
+);
+
+// Access dungeon data
+foreach (var room in dungeon.rooms)
+{
+    Debug.Log($"Room {room.id}: {room.roomType} at {room.Center}");
+}
+bool walkable = dungeon.IsWalkable(x, y);
+TileType tile = dungeon.GetTile(x, y);
+```
+
+#### TerrainGenerator
+Terrain and biome generation.
+```csharp
+// Generate height map
+var settings = new TerrainSettings
+{
+    noiseScale = 50f, octaves = 4,
+    persistence = 0.5f, lacunarity = 2f,
+    seed = 12345
+};
+float[,] heightMap = TerrainGenerator.GenerateHeightMap(256, 256, settings);
+
+// Apply erosion
+TerrainGenerator.ApplyErosion(heightMap, iterations: 1000, erosionStrength: 0.1f);
+
+// Generate biome map
+float[,] moistureMap = NoiseGenerator.GeneratePerlinNoiseMap(256, 256, 100f, 4, 0.5f, 2f, Vector2.zero, 54321);
+int[,] biomeMap = TerrainGenerator.GenerateBiomeMap(heightMap, moistureMap, biomeList);
+```
+
+#### NameGenerator
+Fantasy name generation.
+```csharp
+// Generate character names
+string name = NameGenerator.GenerateName(seed: 12345);  // e.g., "Valandris"
+
+// Generate town names
+string town = NameGenerator.GenerateTownName(seed: 12345);  // e.g., "Shadowhaven"
+
+// Generate multiple unique names
+List<string> names = NameGenerator.GenerateNames(count: 10, baseSeed: 0);
+```
+
+#### LootGenerator
+Weighted loot table generation.
+```csharp
+var lootTable = new LootGenerator.LootTable
+{
+    tableId = "chest_common",
+    minDrops = 1, maxDrops = 3,
+    nothingChance = 0.1f,
+    entries = new List<LootGenerator.LootEntry>
+    {
+        new() { itemId = "gold", weight = 10f, minQuantity = 10, maxQuantity = 50 },
+        new() { itemId = "potion", weight = 5f, minQuantity = 1, maxQuantity = 3 },
+        new() { itemId = "rare_gem", weight = 1f, minQuantity = 1, maxQuantity = 1, rarity = 0.5f }
+    }
+};
+
+List<LootGenerator.LootResult> drops = LootGenerator.GenerateLoot(
+    lootTable, playerLevel: 10, luckModifier: 1.2f
+);
+```
+
+#### WaveFunctionCollapse
+Advanced tile-based procedural generation.
+```csharp
+var patterns = new List<WaveFunctionCollapse.TilePattern>
+{
+    new() { tileId = 0, name = "Grass", weight = 3f, allowedTop = new[] { 0, 1 }, ... },
+    new() { tileId = 1, name = "Water", weight = 1f, allowedTop = new[] { 1 }, ... },
+    // Define adjacency rules for each tile
+};
+
+int[,] generatedMap = WaveFunctionCollapse.Generate(
+    width: 50, height: 50, patterns: patterns, seed: 12345
+);
 ```
 
 ---
