@@ -184,9 +184,8 @@ namespace UsefulScripts.Utilities
         /// </summary>
         public string GetFormattedTime()
         {
-            float displayTime = type == TimerType.Countdown ? currentTime : currentTime;
-            int minutes = Mathf.FloorToInt(displayTime / 60f);
-            int seconds = Mathf.FloorToInt(displayTime % 60f);
+            int minutes = Mathf.FloorToInt(currentTime / 60f);
+            int seconds = Mathf.FloorToInt(currentTime % 60f);
             return $"{minutes:00}:{seconds:00}";
         }
 
@@ -195,10 +194,9 @@ namespace UsefulScripts.Utilities
         /// </summary>
         public string GetFormattedTimeWithMilliseconds()
         {
-            float displayTime = type == TimerType.Countdown ? currentTime : currentTime;
-            int minutes = Mathf.FloorToInt(displayTime / 60f);
-            int seconds = Mathf.FloorToInt(displayTime % 60f);
-            int milliseconds = Mathf.FloorToInt((displayTime * 100f) % 100f);
+            int minutes = Mathf.FloorToInt(currentTime / 60f);
+            int seconds = Mathf.FloorToInt(currentTime % 60f);
+            int milliseconds = Mathf.FloorToInt((currentTime * 100f) % 100f);
             return $"{minutes:00}:{seconds:00}:{milliseconds:00}";
         }
     }

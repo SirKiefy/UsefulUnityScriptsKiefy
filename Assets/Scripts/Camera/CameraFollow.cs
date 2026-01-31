@@ -128,7 +128,7 @@ namespace UsefulScripts.Camera
             if (lookDirection != Vector3.zero)
             {
                 Quaternion targetRotation = Quaternion.LookRotation(lookDirection);
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, lookAtSmoothTime / Time.deltaTime * Time.deltaTime);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, lookAtSmoothTime);
             }
         }
 

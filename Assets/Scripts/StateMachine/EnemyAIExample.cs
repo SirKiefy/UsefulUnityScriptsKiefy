@@ -27,6 +27,11 @@ namespace UsefulScripts.StateMachine
         public int currentPatrolIndex;
         public float lastAttackTime;
 
+        /// <summary>
+        /// Public accessor for the state machine
+        /// </summary>
+        public StateMachine<EnemyAI> FSM => stateMachine;
+
         private void Awake()
         {
             rb = GetComponent<Rigidbody>();
@@ -123,14 +128,14 @@ namespace UsefulScripts.StateMachine
             // Check for player
             if (context.DistanceToPlayer() < context.detectionRange)
             {
-                context.GetComponent<EnemyAI>().GetStateMachine()?.ChangeState<ChaseState>();
+                context.FSM.ChangeState<ChaseState>();
                 return;
             }
 
             // Transition to patrol
             if (timer >= context.idleTime)
             {
-                context.GetComponent<EnemyAI>().GetStateMachine()?.ChangeState<PatrolState>();
+                context.FSM.ChangeState<PatrolState>();
             }
         }
     }
@@ -142,14 +147,14 @@ namespace UsefulScripts.StateMachine
             // Check for player
             if (context.DistanceToPlayer() < context.detectionRange)
             {
-                context.GetComponent<EnemyAI>().GetStateMachine()?.ChangeState<ChaseState>();
+                context.FSM.ChangeState<ChaseState>();
                 return;
             }
 
             // Patrol logic
             if (context.patrolPoints == null || context.patrolPoints.Length == 0)
             {
-                context.GetComponent<EnemyAI>().GetStateMachine()?.ChangeState<IdleState>();
+                context.FSM.ChangeState<IdleState>();
                 return;
             }
 
@@ -160,7 +165,7 @@ namespace UsefulScripts.StateMachine
             if (Vector3.Distance(context.transform.position, target.position) < 0.5f)
             {
                 context.currentPatrolIndex = (context.currentPatrolIndex + 1) % context.patrolPoints.Length;
-                context.GetComponent<EnemyAI>().GetStateMachine()?.ChangeState<IdleState>();
+                context.FSM.ChangeState<IdleState>();
             }
         }
     }
@@ -174,14 +179,14 @@ namespace UsefulScripts.StateMachine
             // Lost player
             if (distance > context.detectionRange * 1.5f)
             {
-                context.GetComponent<EnemyAI>().GetStateMachine()?.ChangeState<IdleState>();
+                context.FSM.ChangeState<IdleState>();
                 return;
             }
 
             // In attack range
             if (distance < context.attackRange)
             {
-                context.GetComponent<EnemyAI>().GetStateMachine()?.ChangeState<AttackState>();
+                context.FSM.ChangeState<AttackState>();
                 return;
             }
 
@@ -207,7 +212,7 @@ namespace UsefulScripts.StateMachine
             // Out of range
             if (distance > context.attackRange * 1.2f)
             {
-                context.GetComponent<EnemyAI>().GetStateMachine()?.ChangeState<ChaseState>();
+                context.FSM.ChangeState<ChaseState>();
                 return;
             }
 
@@ -216,22 +221,6 @@ namespace UsefulScripts.StateMachine
             {
                 context.Attack();
             }
-        }
-    }
-
-    // Extension for getting state machine from EnemyAI
-    public static class EnemyAIExtensions
-    {
-        private static System.Reflection.FieldInfo stateMachineField;
-
-        public static StateMachine<EnemyAI> GetStateMachine(this EnemyAI enemy)
-        {
-            if (stateMachineField == null)
-            {
-                stateMachineField = typeof(EnemyAI).GetField("stateMachine", 
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            }
-            return stateMachineField?.GetValue(enemy) as StateMachine<EnemyAI>;
         }
     }
 }
