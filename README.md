@@ -11,6 +11,7 @@ Assets/
     ├── Utilities/             # Helper utilities (Timer, Tween, MathUtils)
     ├── Player/                # Player controllers & health system
     ├── FPS/                   # Advanced FPS movement (Titanfall-inspired)
+    ├── ColossusMechanics/     # Shadow of the Colossus climbing & grip system
     ├── Camera/                # Camera follow & shake systems
     ├── UI/                    # UI management & transitions
     ├── Audio/                 # Audio management system
@@ -181,6 +182,105 @@ Ledge climbing and mantling system:
 mantle.OnMantleStart += () => PlayAnimation("mantle");
 mantle.OnStaminaChanged += UpdateStaminaUI;
 if (mantle.CanMantle) { ShowMantlePrompt(); }
+```
+
+---
+
+### Colossus Mechanics (Shadow of the Colossus-Inspired)
+
+Complete climbing and gripping system inspired by Shadow of the Colossus. Allows players to grab onto and climb massive creatures or surfaces while managing stamina.
+
+#### GripSystem
+Core player component for gripping and climbing:
+- Grip onto any surface or specific grip points
+- Stamina management with drain rates for gripping vs climbing
+- Climb in any direction while attached
+- Attack weak points with charged attacks
+- Jump off with directional control
+- Automatic stamina recovery when grounded
+
+```csharp
+// Attach to player with CharacterController
+// Events for UI integration:
+gripSystem.OnStaminaChanged += (current, max) => UpdateStaminaBar(current / max);
+gripSystem.OnGripStart += () => ShowClimbingUI();
+gripSystem.OnShakeStart += () => ShowWarning("Hold on!");
+
+// Properties for state checks:
+if (gripSystem.IsGripping) { /* player is attached */ }
+if (gripSystem.IsLowStamina) { /* show warning */ }
+float chargePercent = gripSystem.ChargePercent; // for attack charge UI
+```
+
+#### ClimbableColossus
+Attach to giant creatures or objects that can be climbed:
+- Manages multiple grip points
+- Periodic shake events to test player's grip
+- Movement along waypoints
+- Health system with weak point damage multipliers
+- Events for shake start/end
+
+```csharp
+// Setup on a boss creature
+colossus.OnShakeStart += () => PlayShakeAnimation();
+colossus.OnDeath += () => TriggerVictoryCutscene();
+
+// Player detection increases shake frequency
+// Find nearest grip point:
+GripPoint point = colossus.FindNearestGripPointInRange(playerPos, 3f);
+```
+
+#### GripPoint
+Defines specific locations on a colossus that can be grabbed:
+- Configurable grip radius
+- Weak point designation with damage multipliers
+- Fur grip bonus (reduces stamina drain)
+- Approach direction requirements
+- Visual highlighting
+
+```csharp
+// Place on climbable locations (fur patches, ledges, etc.)
+// Properties:
+if (gripPoint.IsWeakPoint) { ShowWeakPointIndicator(); }
+float bonus = gripPoint.FurGripBonus; // typically 1.2 for furry surfaces
+```
+
+#### ColossusShakeEffect
+Player feedback during shake events:
+- Camera shake with Perlin noise
+- Controller rumble support
+- Audio feedback (strain sounds, warnings)
+- Low stamina visual effects
+
+```csharp
+// Attach to player alongside GripSystem
+// Automatically handles:
+// - Camera shake when colossus shakes
+// - Increased shake when stamina is low
+// - Strain sounds at low stamina
+
+// Manual trigger:
+shakeEffect.TriggerShake(0.5f, 1f); // intensity, duration
+```
+
+#### Complete Setup Example
+```csharp
+// 1. Player Setup:
+// - Add CharacterController
+// - Add GripSystem
+// - Add ColossusShakeEffect
+
+// 2. Colossus Setup:
+// - Add ClimbableColossus to root
+// - Add GripPoint children at climbable locations
+// - Mark weak points (e.g., head, back)
+// - Configure shake settings
+
+// 3. UI Integration:
+gripSystem.OnStaminaChanged += (cur, max) => staminaBar.fillAmount = cur / max;
+gripSystem.OnGripStart += () => staminaBar.gameObject.SetActive(true);
+gripSystem.OnGripEnd += () => staminaBar.gameObject.SetActive(false);
+colossus.OnDamageTaken += (dmg) => ShowDamageNumber(dmg);
 ```
 
 ---
