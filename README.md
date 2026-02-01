@@ -11,6 +11,7 @@ Assets/
     ├── Utilities/             # Helper utilities (Timer, Tween, MathUtils)
     ├── Player/                # Player controllers & health system
     ├── FPS/                   # Advanced FPS movement (Titanfall-inspired)
+    ├── SpaceShip/             # Complete spaceship systems (Elite/Star Citizen-inspired)
     ├── Camera/                # Camera follow & shake systems
     ├── UI/                    # UI management & transitions
     ├── Audio/                 # Audio management system
@@ -180,6 +181,262 @@ Ledge climbing and mantling system:
 mantle.OnMantleStart += () => PlayAnimation("mantle");
 mantle.OnStaminaChanged += UpdateStaminaUI;
 if (mantle.CanMantle) { ShowMantlePrompt(); }
+```
+
+---
+
+### SpaceShip Systems (Elite Dangerous/Star Citizen-Inspired)
+
+Complete spaceship movement, combat, and systems management inspired by Elite Dangerous, Star Citizen, No Man's Sky, and 4X strategy games. Use individual components or the complete integrated suite.
+
+#### SpaceShipController
+Core 6-DOF (degrees of freedom) ship movement with realistic Newtonian physics:
+- Main, reverse, lateral, and vertical thrust
+- Pitch, yaw, and roll rotation
+- Boost system with cooldown
+- Throttle control with presets
+- Speed limiting and inertia
+
+```csharp
+// Attach to ship with Rigidbody
+var controller = GetComponent<SpaceShipController>();
+
+// Movement control
+controller.SetThrustInput(strafe, vertical, forward);
+controller.SetRotationInput(pitch, yaw, roll);
+controller.SetThrottle(0.75f);
+
+// Boost
+controller.StartBoost();
+controller.OnBoostStart += () => PlaySound("boost");
+
+// Flight assist modes
+controller.SetFlightAssist(FlightAssistMode.Full);   // Dampened movement
+controller.SetFlightAssist(FlightAssistMode.Off);    // Pure Newtonian
+controller.CycleFlightAssist();  // Toggle modes
+```
+
+#### FlightAssistSystem
+Advanced flight assist with velocity matching and approach control:
+- Linear and rotational dampening
+- Velocity matching with targets
+- Approach assist for docking
+- Drift cancellation
+- Auto-orient toward targets
+
+```csharp
+var flightAssist = GetComponent<FlightAssistSystem>();
+
+// Match velocity with another ship
+flightAssist.StartVelocityMatch(targetShip);
+
+// Automatic slowdown when approaching target
+flightAssist.StartApproachAssist(station, desiredSpeed: 50f);
+
+// Auto-orient toward target
+flightAssist.SetAutoOrientTarget(enemy);
+```
+
+#### WarpDriveSystem
+Multiple FTL travel modes for interstellar gameplay:
+- **Supercruise**: In-system fast travel with variable speed
+- **Hyperspace Jump**: Inter-system travel with charge time
+- **Quantum Travel**: Point-to-point fast travel
+
+```csharp
+var warpDrive = GetComponent<WarpDriveSystem>();
+
+// Supercruise (in-system travel)
+warpDrive.StartSupercruiseCharge();
+warpDrive.SetSupercruiseThrottle(0.8f);
+warpDrive.DisengageSupercruise();
+
+// Hyperspace jump (inter-system)
+warpDrive.StartHyperspaceCharge(destinationPosition);
+warpDrive.OnHyperspaceJumpComplete += () => UpdateStarMap();
+
+// Quantum travel (point-to-point)
+warpDrive.SetQuantumTarget(beacon);
+warpDrive.StartQuantumCharge();
+
+// Fuel management
+warpDrive.ConsumeFuel(amount);
+warpDrive.Refuel();
+```
+
+#### TurretSystem
+Weapon turret with tracking and firing:
+- Fixed, gimballed, and turreted mount types
+- Lead prediction for moving targets
+- Heat and ammunition management
+- Multi-fire point support
+
+```csharp
+var turret = GetComponent<TurretSystem>();
+
+// Aiming
+turret.SetAimPoint(worldPosition);
+turret.TrackTarget(enemy);
+
+// Firing
+turret.StartFiring();
+turret.Fire();  // Single shot
+turret.StopFiring();
+
+// Check lead position for UI
+Vector3 lead = turret.CalculateLeadPosition(target);
+if (turret.CanFire) { ShowFireIndicator(); }
+```
+
+#### ShipWeaponSystem
+Complete weapon management for multiple hardpoints:
+- Weapon hardpoint configuration
+- Firing groups (primary/secondary)
+- Power management for weapons
+- Coordinated targeting
+
+```csharp
+var weapons = GetComponent<ShipWeaponSystem>();
+
+// Firing groups
+weapons.StartFiringGroup(0);  // Primary fire
+weapons.StartFiringGroup(1);  // Secondary fire
+weapons.CycleFiringGroup();
+
+// Hardpoint management
+weapons.AssignToFiringGroup(hardpointIndex: 0, groupIndex: 0);
+weapons.AimAt(targetPosition);
+
+// Power for weapons
+weapons.ConsumePower(amount);
+float heat = weapons.GetAverageHeat();
+```
+
+#### ShipTargetingSystem
+Target acquisition and tracking:
+- Target scanning and selection
+- Lock-on mechanics with progress
+- Lead indicator calculation
+- Subsystem targeting
+- IFF (Identification Friend/Foe)
+- Threat assessment
+
+```csharp
+var targeting = GetComponent<ShipTargetingSystem>();
+
+// Target selection
+targeting.TargetInCrosshairs();
+targeting.NextTarget();
+targeting.TargetNearestHostile();
+targeting.TargetHighestThreat();
+
+// Lock-on
+targeting.OnLockAcquired += () => PlaySound("locked");
+if (targeting.IsLocked) { FireMissile(); }
+
+// Lead indicator
+Vector3 leadPos = targeting.LeadPosition;
+bool onTarget = targeting.IsLeadOnTarget(tolerance: 5f);
+
+// Subsystem targeting
+targeting.CycleSubsystem();
+targeting.TargetSubsystem(SubsystemType.Engines);
+```
+
+#### ShipCombatManager
+Combat state and damage management:
+- Combat state tracking
+- Damage distribution (shields → armor → hull)
+- Point defense against missiles
+- Countermeasures (chaff/flares)
+- Evasive maneuvers
+
+```csharp
+var combat = GetComponent<ShipCombatManager>();
+
+// Combat engagement
+combat.EngageEnemy(enemy);
+combat.OnEnemyEngaged += (e) => PlayBattleMusic();
+
+// Countermeasures
+combat.DeployChaff();
+combat.DeployFlare();
+
+// Evasive maneuvers
+combat.StartEvasive();
+Vector3 evasiveDir = combat.GetEvasiveDirection();
+
+// Power priority
+combat.SetPowerPriority(PowerPriority.Weapons);
+```
+
+#### ShipSubsystems
+Module and power management:
+- Power plant and distribution
+- Multiple subsystem types (engines, shields, weapons, life support, etc.)
+- Subsystem damage and repair
+- Efficiency based on health
+
+```csharp
+var subsystems = GetComponent<ShipSubsystems>();
+
+// Power distribution (Elite Dangerous style)
+subsystems.SetPowerDistribution(weapons: 0.5f, shields: 0.3f, engines: 0.2f);
+subsystems.IncreasePower(PowerCategory.Weapons);
+
+// Subsystem management
+subsystems.ToggleSubsystem(SubsystemType.Weapons);
+float efficiency = subsystems.GetSubsystemEfficiency(SubsystemType.Engines);
+
+// Damage and repair
+subsystems.DamageSubsystem(SubsystemType.Engines, damage: 30f);
+subsystems.RepairSubsystem(SubsystemType.Engines, amount: 50f);
+subsystems.FullRepair();
+```
+
+#### ShipHealthSystem
+Ship durability with multiple layers:
+- Hull integrity
+- Armor with damage reduction
+- Shields with regeneration and types
+- Critical damage states
+- Destruction handling
+
+```csharp
+var health = GetComponent<ShipHealthSystem>();
+
+// Take damage (full pipeline)
+health.TakeDamage(100f, DamageType.Kinetic, hitPoint);
+
+// Shield management
+health.BoostShield(amount);  // Shield cell bank
+health.OnShieldDepleted += () => PlayWarning();
+
+// Status checks
+if (health.IsCritical) { EnableEmergencyPower(); }
+float shieldPercent = health.ShieldPercent;
+
+// Shield types (like Elite Dangerous)
+health.SetShieldType(ShieldType.BiWeave);    // Fast regen
+health.SetShieldType(ShieldType.Prismatic);  // High capacity
+```
+
+#### ShipInputHandler
+Complete input mapping for all ship systems:
+- Flight controls (WASD, mouse)
+- Weapon controls
+- Targeting bindings
+- Warp controls
+- Power management shortcuts
+
+```csharp
+// Attach to ship - all input is handled automatically
+var input = GetComponent<ShipInputHandler>();
+
+// Configuration
+input.SetMouseSensitivity(2f);
+input.SetInvertPitch(true);
+input.ToggleMouseMode();  // Relative vs absolute
 ```
 
 ---
