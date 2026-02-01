@@ -325,7 +325,7 @@ namespace UsefulScripts.Player
         public bool IsMounted => mountSystem != null && mountSystem.IsMounted;
         public bool HasIframes => hasIframes;
         public GroundType CurrentGroundType => currentGroundType;
-        public float CurrentSpeed => rb != null ? new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z).magnitude : 0f;
+        public float CurrentSpeed => rb != null ? Mathf.Sqrt(rb.linearVelocity.x * rb.linearVelocity.x + rb.linearVelocity.z * rb.linearVelocity.z) : 0f;
         public Vector3 Velocity => rb != null ? rb.linearVelocity : Vector3.zero;
         public float GroundAngle => groundAngle;
         public float Oxygen => currentOxygen;
@@ -884,7 +884,8 @@ namespace UsefulScripts.Player
 
             if (isSliding)
             {
-                return slideDirection * (config != null ? config.slideSpeed : 14f) * slideCooldownTimer;
+                float slideFriction = slideTimer / (config != null ? config.slideDuration : 0.8f);
+                return slideDirection * (config != null ? config.slideSpeed : 14f) * slideFriction;
             }
 
             // Apply speed multipliers
@@ -1246,14 +1247,12 @@ namespace UsefulScripts.Player
         {
             isClimbing = true;
             climbSurfaceNormal = wallNormal;
-            rb.useGravity = false;
             OnStartClimbing?.Invoke();
         }
 
         private void StopClimbing()
         {
             isClimbing = false;
-            rb.useGravity = true;
             OnStopClimbing?.Invoke();
         }
 

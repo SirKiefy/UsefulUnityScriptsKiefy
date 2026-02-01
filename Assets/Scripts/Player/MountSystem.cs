@@ -454,7 +454,7 @@ namespace UsefulScripts.Player
         [SerializeField] private float feedCooldown = 300f; // 5 minutes
         [SerializeField] private float feedBondBonus = 5f;
         [SerializeField] private float feedHappinessBonus = 10f;
-        [SerializeField] private float groomeHappinessBonus = 5f;
+        [SerializeField] private float groomHappinessBonus = 5f;
 
         // State
         private List<TamedCreature> tamedCreatures = new List<TamedCreature>();
@@ -912,7 +912,7 @@ namespace UsefulScripts.Player
 
             creature.bond.lastGroomedTime = Time.time;
             creature.bond.AddBond(2f);
-            creature.bond.AddHappiness(groomeHappinessBonus);
+            creature.bond.AddHappiness(groomHappinessBonus);
 
             return true;
         }
