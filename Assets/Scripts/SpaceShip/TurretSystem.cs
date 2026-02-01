@@ -353,9 +353,8 @@ namespace UsefulScripts.SpaceShip
             if (turretBarrel != null)
             {
                 turretBarrel.localRotation = Quaternion.Euler(currentPitch, 0, 0);
+                currentAimDirection = turretBarrel.forward;
             }
-
-            currentAimDirection = turretBarrel.forward;
         }
 
         /// <summary>

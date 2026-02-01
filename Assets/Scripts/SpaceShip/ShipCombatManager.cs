@@ -29,6 +29,8 @@ namespace UsefulScripts.SpaceShip
         [Header("Countermeasures")]
         [SerializeField] private int chaffCount = 10;
         [SerializeField] private int flareCount = 10;
+        [SerializeField] private int maxChaffCount = 10;
+        [SerializeField] private int maxFlareCount = 10;
         [SerializeField] private float countermeasureCooldown = 5f;
         [SerializeField] private float chaffDuration = 5f;
         [SerializeField] private float flareDuration = 3f;
@@ -399,7 +401,7 @@ namespace UsefulScripts.SpaceShip
             }
 
             OnChaffDeployed?.Invoke();
-            OnChaffCountChanged?.Invoke(chaffCount, 10);
+            OnChaffCountChanged?.Invoke(chaffCount, maxChaffCount);
             return true;
         }
 
@@ -420,7 +422,7 @@ namespace UsefulScripts.SpaceShip
             }
 
             OnFlareDeployed?.Invoke();
-            OnFlareCountChanged?.Invoke(flareCount, 10);
+            OnFlareCountChanged?.Invoke(flareCount, maxFlareCount);
             return true;
         }
 
@@ -438,10 +440,10 @@ namespace UsefulScripts.SpaceShip
         /// </summary>
         public void ReloadCountermeasures(int chaff, int flares)
         {
-            chaffCount = Mathf.Min(chaffCount + chaff, 20);
-            flareCount = Mathf.Min(flareCount + flares, 20);
-            OnChaffCountChanged?.Invoke(chaffCount, 20);
-            OnFlareCountChanged?.Invoke(flareCount, 20);
+            chaffCount = Mathf.Min(chaffCount + chaff, maxChaffCount);
+            flareCount = Mathf.Min(flareCount + flares, maxFlareCount);
+            OnChaffCountChanged?.Invoke(chaffCount, maxChaffCount);
+            OnFlareCountChanged?.Invoke(flareCount, maxFlareCount);
         }
 
         #endregion

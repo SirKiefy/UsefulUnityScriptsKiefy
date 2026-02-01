@@ -19,6 +19,7 @@ namespace UsefulScripts.SpaceShip
         [SerializeField] [Range(0f, 1f)] private float weaponsPower = 0.33f;
         [SerializeField] [Range(0f, 1f)] private float shieldsPower = 0.33f;
         [SerializeField] [Range(0f, 1f)] private float enginesPower = 0.34f;
+        [SerializeField] private float powerScalingFactor = 3f;
 
         [Header("Subsystem List")]
         [SerializeField] private List<ShipSubsystem> subsystems = new List<ShipSubsystem>();
@@ -247,12 +248,12 @@ namespace UsefulScripts.SpaceShip
             switch (type)
             {
                 case SubsystemType.Weapons:
-                    return weaponsPower * 3f; // Scale 0-1 to 0-3
+                    return weaponsPower * powerScalingFactor;
                 case SubsystemType.ShieldGenerator:
-                    return shieldsPower * 3f;
+                    return shieldsPower * powerScalingFactor;
                 case SubsystemType.Engines:
                 case SubsystemType.Thrusters:
-                    return enginesPower * 3f;
+                    return enginesPower * powerScalingFactor;
                 default:
                     return 1f;
             }

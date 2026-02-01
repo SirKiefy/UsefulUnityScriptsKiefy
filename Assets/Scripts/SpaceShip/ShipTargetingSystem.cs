@@ -30,7 +30,6 @@ namespace UsefulScripts.SpaceShip
 
         [Header("Subsystem Targeting")]
         [SerializeField] private bool enableSubsystemTargeting = true;
-        [SerializeField] private KeyCode cycleSubsystemKey = KeyCode.Y;
 
         [Header("Hostile Detection")]
         [SerializeField] private string hostileTag = "Enemy";
@@ -99,7 +98,6 @@ namespace UsefulScripts.SpaceShip
             UpdateLeadIndicator();
             UpdateTargetInfo();
             UpdateThreatAssessment();
-            HandleInput();
         }
 
         #region Target Scanning
@@ -641,18 +639,6 @@ namespace UsefulScripts.SpaceShip
             hostileTag = hostile;
             friendlyTag = friendly;
             neutralTag = neutral;
-        }
-
-        #endregion
-
-        #region Input
-
-        private void HandleInput()
-        {
-            if (Input.GetKeyDown(cycleSubsystemKey))
-            {
-                CycleSubsystem();
-            }
         }
 
         #endregion

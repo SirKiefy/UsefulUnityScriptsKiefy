@@ -397,9 +397,10 @@ namespace UsefulScripts.SpaceShip
         private IEnumerator HyperspaceJumpSequence()
         {
             float elapsedTime = 0f;
+            Vector3 startPosition = transform.position;
 
             // Consume fuel
-            float distance = Vector3.Distance(transform.position, hyperspaceDestination);
+            float distance = Vector3.Distance(startPosition, hyperspaceDestination);
             float requiredFuel = distance * hyperspaceFuelPerLightYear;
             ConsumeFuel(requiredFuel);
 
@@ -408,8 +409,8 @@ namespace UsefulScripts.SpaceShip
                 elapsedTime += Time.deltaTime;
                 float t = elapsedTime / hyperspaceJumpDuration;
 
-                // Update position (lerp through hyperspace)
-                transform.position = Vector3.Lerp(transform.position, hyperspaceDestination, t * t);
+                // Update position (lerp through hyperspace from start to destination)
+                transform.position = Vector3.Lerp(startPosition, hyperspaceDestination, t * t);
 
                 // Camera effects
                 if (shipCamera != null)
