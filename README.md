@@ -11,6 +11,7 @@ Assets/
     ├── Utilities/             # Helper utilities (Timer, Tween, MathUtils)
     ├── Player/                # Player controllers & health system
     ├── FPS/                   # Advanced FPS movement (Titanfall-inspired)
+    ├── ColossusMechanics/     # Shadow of the Colossus climbing & grip system
     ├── Camera/                # Camera follow & shake systems
     ├── UI/                    # UI management & transitions
     ├── Audio/                 # Audio management system
@@ -26,14 +27,14 @@ Assets/
     ├── Input/                 # Rebindable input management
     ├── Achievement/           # Achievement tracking & rewards
     ├── ProceduralGeneration/  # Procedural content generation utilities
-    ├── Weapons/               # Modular weapon crafting & customization system
-    ├── BaseBuilding/          # Base building & construction system
+    ├── Combat/                # Modular armor system for vehicles, mechs, players
     └── RPG/                   # Complete RPG & JRPG systems
         ├── CharacterStatsSystem  # Comprehensive stats, attributes, leveling
         ├── CombatSystem          # Turn-based, ATB, real-time combat
         ├── PartySystem           # Party management, formations, synergies
         ├── ClassSystem           # Job/class changing, skill trees
         ├── CraftingSystem        # Recipes, professions, quality tiers
+        ├── SpellCraftingSystem   # Spell crafting with 3-slot, freestyle, rune styles
         ├── RelationshipSystem    # Social links, romance, factions
         ├── SkillSystem           # Skill learning, inheritance, cooldowns
         └── SummonSystem          # Monster taming, evolution, summoning
@@ -182,6 +183,105 @@ Ledge climbing and mantling system:
 mantle.OnMantleStart += () => PlayAnimation("mantle");
 mantle.OnStaminaChanged += UpdateStaminaUI;
 if (mantle.CanMantle) { ShowMantlePrompt(); }
+```
+
+---
+
+### Colossus Mechanics (Shadow of the Colossus-Inspired)
+
+Complete climbing and gripping system inspired by Shadow of the Colossus. Allows players to grab onto and climb massive creatures or surfaces while managing stamina.
+
+#### GripSystem
+Core player component for gripping and climbing:
+- Grip onto any surface or specific grip points
+- Stamina management with drain rates for gripping vs climbing
+- Climb in any direction while attached
+- Attack weak points with charged attacks
+- Jump off with directional control
+- Automatic stamina recovery when grounded
+
+```csharp
+// Attach to player with CharacterController
+// Events for UI integration:
+gripSystem.OnStaminaChanged += (current, max) => UpdateStaminaBar(current / max);
+gripSystem.OnGripStart += () => ShowClimbingUI();
+gripSystem.OnShakeStart += () => ShowWarning("Hold on!");
+
+// Properties for state checks:
+if (gripSystem.IsGripping) { /* player is attached */ }
+if (gripSystem.IsLowStamina) { /* show warning */ }
+float chargePercent = gripSystem.ChargePercent; // for attack charge UI
+```
+
+#### ClimbableColossus
+Attach to giant creatures or objects that can be climbed:
+- Manages multiple grip points
+- Periodic shake events to test player's grip
+- Movement along waypoints
+- Health system with weak point damage multipliers
+- Events for shake start/end
+
+```csharp
+// Setup on a boss creature
+colossus.OnShakeStart += () => PlayShakeAnimation();
+colossus.OnDeath += () => TriggerVictoryCutscene();
+
+// Player detection increases shake frequency
+// Find nearest grip point:
+GripPoint point = colossus.FindNearestGripPointInRange(playerPos, 3f);
+```
+
+#### GripPoint
+Defines specific locations on a colossus that can be grabbed:
+- Configurable grip radius
+- Weak point designation with damage multipliers
+- Fur grip bonus (reduces stamina drain)
+- Approach direction requirements
+- Visual highlighting
+
+```csharp
+// Place on climbable locations (fur patches, ledges, etc.)
+// Properties:
+if (gripPoint.IsWeakPoint) { ShowWeakPointIndicator(); }
+float bonus = gripPoint.FurGripBonus; // typically 1.2 for furry surfaces
+```
+
+#### ColossusShakeEffect
+Player feedback during shake events:
+- Camera shake with Perlin noise
+- Controller rumble support
+- Audio feedback (strain sounds, warnings)
+- Low stamina visual effects
+
+```csharp
+// Attach to player alongside GripSystem
+// Automatically handles:
+// - Camera shake when colossus shakes
+// - Increased shake when stamina is low
+// - Strain sounds at low stamina
+
+// Manual trigger:
+shakeEffect.TriggerShake(0.5f, 1f); // intensity, duration
+```
+
+#### Complete Setup Example
+```csharp
+// 1. Player Setup:
+// - Add CharacterController
+// - Add GripSystem
+// - Add ColossusShakeEffect
+
+// 2. Colossus Setup:
+// - Add ClimbableColossus to root
+// - Add GripPoint children at climbable locations
+// - Mark weak points (e.g., head, back)
+// - Configure shake settings
+
+// 3. UI Integration:
+gripSystem.OnStaminaChanged += (cur, max) => staminaBar.fillAmount = cur / max;
+gripSystem.OnGripStart += () => staminaBar.gameObject.SetActive(true);
+gripSystem.OnGripEnd += () => staminaBar.gameObject.SetActive(false);
+colossus.OnDamageTaken += (dmg) => ShowDamageNumber(dmg);
 ```
 
 ---
@@ -775,6 +875,65 @@ int[,] generatedMap = WaveFunctionCollapse.Generate(
 
 ---
 
+### Combat System
+
+#### ModularArmorSystem
+Complete modular armor system for vehicles, tanks, mechs, players, and other entities. Supports zone-based damage, multiple damage types, armor degradation, and repair mechanics.
+
+```csharp
+// Attach ModularArmorSystem to any entity
+var armorSystem = GetComponent<ModularArmorSystem>();
+
+// Take damage to a specific zone
+DamageResult result = armorSystem.TakeDamage(100f, ArmorZone.Front, DamageType.Kinetic);
+Debug.Log($"Absorbed: {result.absorbedDamage}, Penetrating: {result.penetratingDamage}");
+
+// Take damage to a random zone based on hit probabilities
+DamageResult randomResult = armorSystem.TakeDamageRandom(50f, DamageType.Explosive);
+
+// Check armor status
+float totalArmor = armorSystem.TotalArmorPercent;
+ArmorState frontState = armorSystem.GetZoneState(ArmorZone.Front);
+bool hasArmor = armorSystem.HasAnyArmor;
+
+// Repair armor
+armorSystem.RepairZone(ArmorZone.Front, 50f);
+armorSystem.FullRepairAll();
+
+// Add/remove armor plates dynamically
+var newPlate = new ArmorPlate("Reactive Armor", 150f, 0.4f, 75f);
+armorSystem.AddPlateToZone(ArmorZone.Front, newPlate);
+
+// Events
+armorSystem.OnDamageReceived += (result) => Debug.Log($"Hit {result.hitZone}!");
+armorSystem.OnZoneBreached += (zone) => Debug.Log($"{zone} armor destroyed!");
+armorSystem.OnAllArmorDestroyed += () => Debug.Log("All armor breached!");
+```
+
+**Features:**
+- **Armor Zones**: Front, Back, Sides, Top, Bottom, Turret, Cockpit, Engine, Legs, Arms, Head, Core, Tracks, Wings, Tail
+- **Damage Types**: Kinetic, Explosive, Energy, Fire, Ice, Electric, Corrosive, Piercing, Concussive
+- **Armor States**: Pristine, Damaged, Compromised, Critical, Breached, Destroyed
+- **Layered Armor**: Multiple plates per zone with penetration mechanics
+- **Resistance System**: Per-plate damage type resistances
+- **Slope/Ricochet**: Angle-based ricochet calculations for kinetic damage
+- **Auto-Repair**: Configurable passive armor regeneration
+- **ScriptableObject Config**: Create reusable armor configurations
+
+```csharp
+// Create armor configuration via ScriptableObject
+[CreateAssetMenu(menuName = "UsefulScripts/Combat/Modular Armor Config")]
+// Configure zones, plates, resistances in Inspector
+
+// Example: Tank armor setup
+var tankArmor = new ArmorZoneData(ArmorZone.Front, hitChance: 0.3f);
+tankArmor.AddPlate(new ArmorPlate("Composite Front", 200f, 0.5f, 100f));
+tankArmor.AddPlate(new ArmorPlate("Reactive Layer", 100f, 0.3f, 50f));
+armorSystem.AddZone(tankArmor);
+```
+
+---
+
 ### RPG Systems
 
 The RPG module provides a complete set of interconnected systems for building deep RPG and JRPG games.
@@ -954,6 +1113,58 @@ CraftingSystem.Instance.OnCraftingComplete += result => {
     if (result.wasCritical) Debug.Log("Critical craft! Bonus items received!");
 };
 CraftingSystem.Instance.OnRecipeDiscovered += recipe => Debug.Log($"Discovered: {recipe.recipeName}!");
+```
+
+#### SpellCraftingSystem
+Flexible spell crafting system supporting multiple crafting styles for magic systems.
+```csharp
+// Set crafting style
+SpellCraftingSystem.Instance.SetCraftingStyle(SpellCraftingStyle.ThreeSlot);
+
+// Three-Slot Crafting (Element + Form + Modifier)
+SpellCraftingSystem.Instance.AddComponentById("fire_element");
+SpellCraftingSystem.Instance.AddComponentById("projectile_form");
+SpellCraftingSystem.Instance.AddComponentById("power_modifier");
+SpellCraftingResult result = SpellCraftingSystem.Instance.CraftSpell();
+Debug.Log($"Crafted {result.craftedSpell.spellName} with {result.quality} quality!");
+
+// Freestyle Crafting (any compatible components)
+SpellCraftingSystem.Instance.SetCraftingStyle(SpellCraftingStyle.Freestyle);
+SpellCraftingSystem.Instance.AddComponentById("ice_element");
+SpellCraftingSystem.Instance.AddComponentById("lightning_element");
+SpellCraftingSystem.Instance.AddComponentById("explosion_form");
+SpellCraftingSystem.Instance.AddComponentById("area_modifier");
+SpellCraftingSystem.Instance.AddComponentById("power_modifier");
+result = SpellCraftingSystem.Instance.CraftSpell();
+
+// Rune-Based Crafting (pattern matching)
+SpellCraftingSystem.Instance.SetCraftingStyle(SpellCraftingStyle.RuneBased);
+SpellCraftingSystem.Instance.AddComponentById("rune_alpha");
+SpellCraftingSystem.Instance.AddComponentById("rune_omega");
+SpellCraftingSystem.Instance.AddComponentById("rune_primal");
+if (SpellCraftingSystem.Instance.CanCraft())
+{
+    result = SpellCraftingSystem.Instance.CraftSpell();
+}
+
+// Preview spell before crafting
+CraftedSpell preview = SpellCraftingSystem.Instance.PreviewSpell();
+var (minQuality, maxQuality, likelyQuality) = SpellCraftingSystem.Instance.GetQualityPrediction();
+
+// Progression system
+int level = SpellCraftingSystem.Instance.Progress.currentLevel;
+SpellCraftingSystem.Instance.LearnRecipe("fireball_recipe");
+
+// Component management
+var availableComponents = SpellCraftingSystem.Instance.GetAvailableComponents();
+var fireComponents = SpellCraftingSystem.Instance.GetComponentsByCategory(SpellComponentCategory.Element);
+
+// Events
+SpellCraftingSystem.Instance.OnSpellCrafted += result => {
+    if (result.wasCritical) Debug.Log("Masterwork spell created!");
+    if (result.discoveredNewRecipe) Debug.Log($"Discovered recipe: {result.discoveredRecipeId}!");
+};
+SpellCraftingSystem.Instance.OnLevelUp += (prev, curr) => Debug.Log($"Spell crafting level up: {curr}!");
 ```
 
 #### RelationshipSystem
