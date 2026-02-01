@@ -33,6 +33,7 @@ Assets/
         ├── PartySystem           # Party management, formations, synergies
         ├── ClassSystem           # Job/class changing, skill trees
         ├── CraftingSystem        # Recipes, professions, quality tiers
+        ├── SpellCraftingSystem   # Spell crafting with 3-slot, freestyle, rune styles
         ├── RelationshipSystem    # Social links, romance, factions
         ├── SkillSystem           # Skill learning, inheritance, cooldowns
         └── SummonSystem          # Monster taming, evolution, summoning
@@ -953,6 +954,58 @@ CraftingSystem.Instance.OnCraftingComplete += result => {
     if (result.wasCritical) Debug.Log("Critical craft! Bonus items received!");
 };
 CraftingSystem.Instance.OnRecipeDiscovered += recipe => Debug.Log($"Discovered: {recipe.recipeName}!");
+```
+
+#### SpellCraftingSystem
+Flexible spell crafting system supporting multiple crafting styles for magic systems.
+```csharp
+// Set crafting style
+SpellCraftingSystem.Instance.SetCraftingStyle(SpellCraftingStyle.ThreeSlot);
+
+// Three-Slot Crafting (Element + Form + Modifier)
+SpellCraftingSystem.Instance.AddComponentById("fire_element");
+SpellCraftingSystem.Instance.AddComponentById("projectile_form");
+SpellCraftingSystem.Instance.AddComponentById("power_modifier");
+SpellCraftingResult result = SpellCraftingSystem.Instance.CraftSpell();
+Debug.Log($"Crafted {result.craftedSpell.spellName} with {result.quality} quality!");
+
+// Freestyle Crafting (any compatible components)
+SpellCraftingSystem.Instance.SetCraftingStyle(SpellCraftingStyle.Freestyle);
+SpellCraftingSystem.Instance.AddComponentById("ice_element");
+SpellCraftingSystem.Instance.AddComponentById("lightning_element");
+SpellCraftingSystem.Instance.AddComponentById("explosion_form");
+SpellCraftingSystem.Instance.AddComponentById("area_modifier");
+SpellCraftingSystem.Instance.AddComponentById("power_modifier");
+result = SpellCraftingSystem.Instance.CraftSpell();
+
+// Rune-Based Crafting (pattern matching)
+SpellCraftingSystem.Instance.SetCraftingStyle(SpellCraftingStyle.RuneBased);
+SpellCraftingSystem.Instance.AddComponentById("rune_alpha");
+SpellCraftingSystem.Instance.AddComponentById("rune_omega");
+SpellCraftingSystem.Instance.AddComponentById("rune_primal");
+if (SpellCraftingSystem.Instance.CanCraft())
+{
+    result = SpellCraftingSystem.Instance.CraftSpell();
+}
+
+// Preview spell before crafting
+CraftedSpell preview = SpellCraftingSystem.Instance.PreviewSpell();
+var (minQuality, maxQuality, likelyQuality) = SpellCraftingSystem.Instance.GetQualityPrediction();
+
+// Progression system
+int level = SpellCraftingSystem.Instance.Progress.currentLevel;
+SpellCraftingSystem.Instance.LearnRecipe("fireball_recipe");
+
+// Component management
+var availableComponents = SpellCraftingSystem.Instance.GetAvailableComponents();
+var fireComponents = SpellCraftingSystem.Instance.GetComponentsByCategory(SpellComponentCategory.Element);
+
+// Events
+SpellCraftingSystem.Instance.OnSpellCrafted += result => {
+    if (result.wasCritical) Debug.Log("Masterwork spell created!");
+    if (result.discoveredNewRecipe) Debug.Log($"Discovered recipe: {result.discoveredRecipeId}!");
+};
+SpellCraftingSystem.Instance.OnLevelUp += (prev, curr) => Debug.Log($"Spell crafting level up: {curr}!");
 ```
 
 #### RelationshipSystem
