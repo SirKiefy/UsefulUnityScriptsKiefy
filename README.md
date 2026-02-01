@@ -9,7 +9,11 @@ Assets/
 └── Scripts/
     ├── Core/                  # Core systems (Singleton, GameManager)
     ├── Utilities/             # Helper utilities (Timer, Tween, MathUtils)
-    ├── Player/                # Player controllers & health system
+    ├── Player/                # Player controllers & character systems
+    │   ├── AdvancedPlayerController  # Detailed 3D movement controller
+    │   ├── CharacterSheet           # Stats, skills, resistances
+    │   ├── PlayerStatController     # Resource management & damage
+    │   └── MountSystem              # Mounts, taming, companions
     ├── FPS/                   # Advanced FPS movement (Titanfall-inspired)
     ├── ColossusMechanics/     # Shadow of the Colossus climbing & grip system
     ├── Camera/                # Camera follow & shake systems
@@ -101,6 +105,85 @@ Modular health component with:
 healthSystem.TakeDamage(25f);
 healthSystem.Heal(10f);
 healthSystem.OnDeath += HandleDeath;
+```
+
+#### AdvancedPlayerController
+Comprehensive 3D player character controller with modular movement:
+- Walking, running, sprinting, crouching, crawling
+- Jumping with coyote time, jump buffering, and air jumps
+- Dodge and dash with iframes
+- Sliding with momentum
+- Wall running and wall jumping
+- Climbing with stamina consumption
+- Swimming with oxygen management
+- Flying and gliding (for mounts or abilities)
+- Ground type detection (ice, mud, sand, etc.)
+- Full integration with CharacterSheet and PlayerStatController
+
+```csharp
+controller.TriggerJump();
+controller.TriggerDodge();
+controller.AddSpeedModifier("buff_haste", 1.5f);
+controller.ApplyKnockback(enemyPosition, 15f);
+```
+
+#### CharacterSheet
+Complete character sheet managing attributes, skills, and progression:
+- 10 primary attributes (Strength, Dexterity, Constitution, Intelligence, Wisdom, Charisma, Luck, Perception, Willpower, Endurance)
+- Derived secondary stats (MaxHealth, Attack, Defense, Speed, etc.)
+- Skill system with visible and **hidden skills**
+- Skill discovery mechanics with conditions
+- Elemental resistances (Fire, Ice, Lightning, Earth, Water, Wind, Light, Dark, etc.)
+- Condition resistances and immunities
+- Level progression with attribute and skill points
+- Stat modifiers with duration and stacking
+
+```csharp
+sheet.AllocateAttributePoints(CharacterAttribute.Strength, 3);
+sheet.LearnSkill("fireball");
+sheet.TryDiscoverHiddenSkill("secret_technique");
+float fireRes = sheet.GetElementalResistance(ElementType.Fire);
+bool isImmune = sheet.IsImmuneToCondition(ConditionType.Poison);
+```
+
+#### PlayerStatController
+Runtime resource management with damage calculation:
+- Health, Mana, Stamina resource pools
+- Shield system
+- Elemental damage with resistance calculation
+- Defense reduction formulas
+- Evasion and block chances
+- Damage records with source tracking
+- Regeneration with delays
+- Invincibility frames
+- Full integration with CharacterSheet stats
+
+```csharp
+statController.TakeDamage(50f, ElementType.Fire, enemyObj);
+statController.Heal(25f);
+statController.ConsumeMana(30f);
+statController.AddShield(100f);
+```
+
+#### MountSystem
+Complete mount and taming system:
+- Creature taming with skill requirements
+- Multiple tamed creatures with management
+- Active creature summoning (companions)
+- Mounting with transition animations
+- Mount speeds (ground, water, flying)
+- Creature stats and leveling
+- Bond/happiness system with mood states
+- Creature care (feeding, grooming, playing)
+- Movement capabilities (Flying, Swimming, Climbing)
+- Creature abilities
+
+```csharp
+mountSystem.StartTaming(creatureDef, wildCreatureObj);
+mountSystem.SummonCreature(instanceId);
+mountSystem.Mount(instanceId);
+mountSystem.FeedCreature(instanceId, "apple");
+float speed = mountSystem.GetMountSpeed(isSprinting: true);
 ```
 
 ---
