@@ -10,6 +10,7 @@ Assets/
     ├── Core/                  # Core systems (Singleton, GameManager)
     ├── Utilities/             # Helper utilities (Timer, Tween, MathUtils)
     ├── Player/                # Player controllers & health system
+    ├── FPS/                   # Advanced FPS movement (Titanfall-inspired)
     ├── Camera/                # Camera follow & shake systems
     ├── UI/                    # UI management & transitions
     ├── Audio/                 # Audio management system
@@ -97,6 +98,88 @@ Modular health component with:
 healthSystem.TakeDamage(25f);
 healthSystem.Heal(10f);
 healthSystem.OnDeath += HandleDeath;
+```
+
+---
+
+### FPS Advanced Movement (Titanfall-Inspired)
+
+Complete advanced movement system inspired by Titanfall's fluid movement mechanics. Use individual components or the complete integrated controller.
+
+#### TitanfallMovementController
+Complete integrated movement controller combining all advanced mechanics:
+- Wall running with camera tilt
+- Momentum-based sliding
+- Grappling hook with swing physics
+- Ledge mantling and climbing
+- Double jump with coyote time
+- Sprint, crouch, and air control
+
+```csharp
+// Attach to player with CharacterController
+// Configure all movement settings in Inspector
+// Access state and events:
+if (controller.IsWallRunning) { /* ... */ }
+controller.OnGrappleStart += HandleGrapple;
+controller.AddVelocity(explosionForce); // External forces
+```
+
+#### WallRunning
+Standalone wall running system:
+- Automatic wall detection on left/right
+- Camera tilt effects
+- FOV changes during wall run
+- Wall jump with directional control
+- Duration-based wall run timer
+
+```csharp
+wallRunning.OnWallRunStart += () => PlaySound("wallrun");
+wallRunning.OnWallJump += () => PlayEffect("walljump");
+if (wallRunning.IsWallRunning) { /* ... */ }
+```
+
+#### AdvancedSlide
+Momentum-preserving slide system:
+- Slope acceleration/deceleration
+- Slide steering control
+- Height transition with camera adjustment
+- Slide jump momentum boost
+- Cooldown management
+
+```csharp
+advancedSlide.OnSlideStart += () => PlaySound("slide");
+Vector3 slideBoost = advancedSlide.GetSlideJumpBoost();
+```
+
+#### GrappleHook
+Versatile grappling system with multiple modes:
+- **PullToPoint**: Direct pull toward grapple point
+- **Swing**: Pendulum physics with rope constraint
+- **Hybrid**: Pull then swing when close
+- Rope visual with wave animation
+- Momentum preservation on release
+- Launch boost mechanics
+
+```csharp
+grapple.OnGrappleStart += (point) => ShowRope();
+grapple.OnGrappleLaunch += () => PlaySound("launch");
+if (grapple.GetPredictedGrapplePoint(out Vector3 point, out float dist)) {
+    ShowGrappleIndicator(point);
+}
+```
+
+#### Mantle
+Ledge climbing and mantling system:
+- Automatic ledge detection
+- Quick mantle for running players
+- Full climb with stamina system
+- Arc trajectory animation
+- Auto-mantle or manual trigger
+
+```csharp
+mantle.OnMantleStart += () => PlayAnimation("mantle");
+mantle.OnStaminaChanged += UpdateStaminaUI;
+if (mantle.CanMantle) { ShowMantlePrompt(); }
 ```
 
 ---
