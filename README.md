@@ -33,6 +33,7 @@ Assets/
         ├── PartySystem           # Party management, formations, synergies
         ├── ClassSystem           # Job/class changing, skill trees
         ├── CraftingSystem        # Recipes, professions, quality tiers
+        ├── SpellCraftingSystem   # Spell crafting with 3-slot, freestyle, rune styles
         ├── RelationshipSystem    # Social links, romance, factions
         ├── SkillSystem           # Skill learning, inheritance, cooldowns
         └── SummonSystem          # Monster taming, evolution, summoning
@@ -1014,6 +1015,58 @@ CraftingSystem.Instance.OnCraftingComplete += result => {
 CraftingSystem.Instance.OnRecipeDiscovered += recipe => Debug.Log($"Discovered: {recipe.recipeName}!");
 ```
 
+#### SpellCraftingSystem
+Flexible spell crafting system supporting multiple crafting styles for magic systems.
+```csharp
+// Set crafting style
+SpellCraftingSystem.Instance.SetCraftingStyle(SpellCraftingStyle.ThreeSlot);
+
+// Three-Slot Crafting (Element + Form + Modifier)
+SpellCraftingSystem.Instance.AddComponentById("fire_element");
+SpellCraftingSystem.Instance.AddComponentById("projectile_form");
+SpellCraftingSystem.Instance.AddComponentById("power_modifier");
+SpellCraftingResult result = SpellCraftingSystem.Instance.CraftSpell();
+Debug.Log($"Crafted {result.craftedSpell.spellName} with {result.quality} quality!");
+
+// Freestyle Crafting (any compatible components)
+SpellCraftingSystem.Instance.SetCraftingStyle(SpellCraftingStyle.Freestyle);
+SpellCraftingSystem.Instance.AddComponentById("ice_element");
+SpellCraftingSystem.Instance.AddComponentById("lightning_element");
+SpellCraftingSystem.Instance.AddComponentById("explosion_form");
+SpellCraftingSystem.Instance.AddComponentById("area_modifier");
+SpellCraftingSystem.Instance.AddComponentById("power_modifier");
+result = SpellCraftingSystem.Instance.CraftSpell();
+
+// Rune-Based Crafting (pattern matching)
+SpellCraftingSystem.Instance.SetCraftingStyle(SpellCraftingStyle.RuneBased);
+SpellCraftingSystem.Instance.AddComponentById("rune_alpha");
+SpellCraftingSystem.Instance.AddComponentById("rune_omega");
+SpellCraftingSystem.Instance.AddComponentById("rune_primal");
+if (SpellCraftingSystem.Instance.CanCraft())
+{
+    result = SpellCraftingSystem.Instance.CraftSpell();
+}
+
+// Preview spell before crafting
+CraftedSpell preview = SpellCraftingSystem.Instance.PreviewSpell();
+var (minQuality, maxQuality, likelyQuality) = SpellCraftingSystem.Instance.GetQualityPrediction();
+
+// Progression system
+int level = SpellCraftingSystem.Instance.Progress.currentLevel;
+SpellCraftingSystem.Instance.LearnRecipe("fireball_recipe");
+
+// Component management
+var availableComponents = SpellCraftingSystem.Instance.GetAvailableComponents();
+var fireComponents = SpellCraftingSystem.Instance.GetComponentsByCategory(SpellComponentCategory.Element);
+
+// Events
+SpellCraftingSystem.Instance.OnSpellCrafted += result => {
+    if (result.wasCritical) Debug.Log("Masterwork spell created!");
+    if (result.discoveredNewRecipe) Debug.Log($"Discovered recipe: {result.discoveredRecipeId}!");
+};
+SpellCraftingSystem.Instance.OnLevelUp += (prev, curr) => Debug.Log($"Spell crafting level up: {curr}!");
+```
+
 #### RelationshipSystem
 Social links, romance, gifts, and faction reputation for deep NPC relationships.
 ```csharp
@@ -1143,6 +1196,95 @@ var captureStats = SummonSystem.Instance.GetCaptureStatistics();
 SummonSystem.Instance.OnMonsterCaptured += monster => Debug.Log($"Captured {monster.nickname}!");
 SummonSystem.Instance.OnMonsterEvolved += (monster, evo) => Debug.Log($"Evolved into {evo.evolvedMonsterName}!");
 ```
+
+---
+
+### Modular Weapon System
+
+Complete weapon crafting and customization system with modular attachments, firing modes, and ammo types.
+
+#### ModularWeaponSystem
+Central manager for weapon crafting, attachment management, and weapon customization.
+```csharp
+// Create a weapon from data
+var weapon = ModularWeaponSystem.Instance.CreateWeapon(assaultRifleData);
+
+// Install attachments
+ModularWeaponSystem.Instance.InstallAttachment(weapon, redDotScopeData);
+ModularWeaponSystem.Instance.InstallAttachment(weapon, suppressorData);
+ModularWeaponSystem.Instance.InstallAttachment(weapon, extendedMagData);
+
+// Remove attachments (returns to inventory)
+ModularWeaponSystem.Instance.UninstallAttachment(weapon, AttachmentType.Scope);
+
+// Change firing mode
+weapon.CycleFiringMode();  // Cycles through supported modes
+weapon.SetFiringMode(FiringMode.Burst);
+
+// Change ammo type
+weapon.SetAmmoType(AmmoType.ArmorPiercing);
+
+// Get weapon stats (with all attachment modifiers applied)
+float damage = weapon.GetFinalStat(WeaponStatType.Damage);
+float fireRate = weapon.GetFinalStat(WeaponStatType.FireRate);
+float accuracy = weapon.GetFinalStat(WeaponStatType.Accuracy);
+var allStats = weapon.GetAllStats();
+
+// Compare stats before/after adding an attachment
+var comparison = ModularWeaponSystem.Instance.GetStatComparison(weapon, newAttachment);
+Debug.Log($"Damage change: {comparison[WeaponStatType.Damage]:+0.0;-0.0}");
+
+// Ammo management
+weapon.Reload();
+weapon.ConsumeAmmo(1);
+weapon.AddReserveAmmo(60);
+
+// Craft weapons and attachments
+ModularWeaponSystem.Instance.StartCraftWeapon("ak47_recipe", result => {
+    Debug.Log($"Crafted: {result.craftedWeapon.customName}");
+});
+
+ModularWeaponSystem.Instance.StartCraftAttachment("holographic_sight_recipe");
+
+// Unlock new recipes
+ModularWeaponSystem.Instance.UnlockWeaponRecipe("sniper_recipe");
+ModularWeaponSystem.Instance.UnlockAttachmentRecipe("thermal_scope_recipe");
+
+// Create and use blueprints (weapon loadout presets)
+var blueprint = ModularWeaponSystem.Instance.CreateBlueprint(weapon, "My CQB Setup");
+var newWeapon = ModularWeaponSystem.Instance.CreateFromBlueprint(blueprint);
+
+// Get compatible attachments for a slot
+var compatibleScopes = ModularWeaponSystem.Instance.GetCompatibleAttachments(weapon, AttachmentType.Scope);
+
+// Events
+ModularWeaponSystem.Instance.OnWeaponCrafted += result => Debug.Log($"Crafted {result.craftedWeapon.customName}");
+ModularWeaponSystem.Instance.OnAttachmentInstalled += (weapon, attachment) => Debug.Log($"Installed {attachment.data.attachmentName}");
+ModularWeaponSystem.Instance.OnFiringModeChanged += (weapon, mode) => Debug.Log($"Mode: {mode}");
+```
+
+#### Attachment Types
+The system supports multiple attachment slots:
+- **Scope**: Red dots, holographic sights, magnified optics, thermal scopes
+- **Barrel**: Suppressors, muzzle brakes, compensators, extended barrels
+- **Magazine**: Extended mags, drum mags, fast-reload mags
+- **Stock**: Adjustable stocks, folding stocks, buffer tubes
+- **Trigger**: Light triggers, heavy triggers, binary triggers
+- **Rails** (Top/Bottom/Left/Right): Lasers, flashlights, grips, bipods
+
+#### Firing Modes
+- SemiAutomatic, Burst, FullAutomatic, BoltAction, PumpAction, Selective
+
+#### Ammo Types
+- Standard calibers: 9mm, .45 ACP, 5.56, 7.62, .50 BMG
+- Shotgun: 12 Gauge, 20 Gauge
+- Special: Energy, Explosive, Incendiary, ArmorPiercing, Hollow, Subsonic, Tracer
+
+#### Weapon Stats (Affected by Attachments)
+- Damage, FireRate, Range, Accuracy, RecoilControl
+- ReloadSpeed, MagazineSize, AimDownSightSpeed, MovementSpeed
+- MuzzleVelocity, Penetration, Stability, Handling
+- HipFireAccuracy, SwapSpeed, SprintToFireTime, NoiseReduction
 
 ---
 
