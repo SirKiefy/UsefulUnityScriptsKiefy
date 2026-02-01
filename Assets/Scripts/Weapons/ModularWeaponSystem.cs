@@ -475,7 +475,7 @@ namespace UsefulScripts.Weapons
             customName = weapon.weaponName;
             currentFiringMode = weapon.defaultFiringMode;
             currentAmmoType = weapon.defaultAmmoType;
-            currentMagazine = GetFinalStat(WeaponStatType.MagazineSize);
+            currentMagazine = weapon.baseMagazineSize;
             reserveAmmo = weapon.reserveAmmoMax;
         }
 
@@ -1033,11 +1033,11 @@ namespace UsefulScripts.Weapons
         public WeaponInstance craftedWeapon;
         public AttachmentData craftedAttachment;
         public string failureReason;
-        public DateTime craftedAt;
+        public float craftedAtTime;
 
         public WeaponCraftingResult()
         {
-            craftedAt = DateTime.Now;
+            craftedAtTime = Time.realtimeSinceStartup;
         }
     }
 
@@ -1064,6 +1064,7 @@ namespace UsefulScripts.Weapons
         private Dictionary<string, int> materials = new Dictionary<string, int>();
         private int craftingLevel = 1;
         private int craftingExperience = 0;
+        private Coroutine activeCraftingCoroutine;
 
         // Delegates for inventory integration
         public Func<string, int> GetMaterialCount;
@@ -1100,6 +1101,18 @@ namespace UsefulScripts.Weapons
             DontDestroyOnLoad(gameObject);
 
             InitializeDefaultRecipes();
+        }
+
+        private void OnDisable()
+        {
+            // Clean up any active crafting coroutine
+            if (activeCraftingCoroutine != null)
+            {
+                StopCoroutine(activeCraftingCoroutine);
+                activeCraftingCoroutine = null;
+            }
+            isCrafting = false;
+            craftingProgress = 0f;
         }
 
         private void InitializeDefaultRecipes()
@@ -1291,7 +1304,7 @@ namespace UsefulScripts.Weapons
             var availableMaterials = GetAvailableMaterials();
             if (!recipe.CanCraft(availableMaterials, craftingLevel)) return false;
 
-            StartCoroutine(CraftWeaponCoroutine(recipe, callback));
+            activeCraftingCoroutine = StartCoroutine(CraftWeaponCoroutine(recipe, callback));
             return true;
         }
 
@@ -1332,6 +1345,7 @@ namespace UsefulScripts.Weapons
 
             isCrafting = false;
             craftingProgress = 0f;
+            activeCraftingCoroutine = null;
 
             OnWeaponCrafted?.Invoke(result);
             callback?.Invoke(result);
@@ -1352,7 +1366,7 @@ namespace UsefulScripts.Weapons
             var availableMaterials = GetAvailableMaterials();
             if (!recipe.CanCraft(availableMaterials, craftingLevel)) return false;
 
-            StartCoroutine(CraftAttachmentCoroutine(recipe, callback));
+            activeCraftingCoroutine = StartCoroutine(CraftAttachmentCoroutine(recipe, callback));
             return true;
         }
 
@@ -1386,6 +1400,7 @@ namespace UsefulScripts.Weapons
 
             isCrafting = false;
             craftingProgress = 0f;
+            activeCraftingCoroutine = null;
 
             OnAttachmentCrafted?.Invoke(result);
             callback?.Invoke(result);
@@ -1396,7 +1411,11 @@ namespace UsefulScripts.Weapons
         /// </summary>
         public void CancelCrafting()
         {
-            StopAllCoroutines();
+            if (activeCraftingCoroutine != null)
+            {
+                StopCoroutine(activeCraftingCoroutine);
+                activeCraftingCoroutine = null;
+            }
             isCrafting = false;
             craftingProgress = 0f;
         }
