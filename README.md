@@ -1388,6 +1388,125 @@ The system supports multiple attachment slots:
 
 ---
 
+### Base Building System
+
+Complete base building system for survival, sandbox, and tower defense games. Features snap-based placement, structural integrity, multiple material tiers, and construction progression.
+
+#### BaseBuildingSystem
+Central manager for building placement, validation, destruction, and structural integrity.
+```csharp
+// Setup player reference
+BaseBuildingSystem.Instance.SetPlayer(playerTransform, playerId, playerName);
+
+// Connect to inventory system for resource management
+BaseBuildingSystem.Instance.GetResourceCount = resourceId => InventorySystem.Instance.GetItemCount(GetItemData(resourceId));
+BaseBuildingSystem.Instance.ConsumeResources = (resourceId, qty) => InventorySystem.Instance.RemoveItem(GetItemData(resourceId), qty);
+BaseBuildingSystem.Instance.AddResources = (resourceId, qty) => InventorySystem.Instance.AddItem(GetItemData(resourceId), qty);
+
+// Enter build mode with a buildable
+BaseBuildingSystem.Instance.EnterBuildMode(woodWallData);
+
+// Select different buildables while in build mode
+BaseBuildingSystem.Instance.SelectBuildable(woodFloorData);
+
+// Place building at current preview location
+BaseBuildingSystem.Instance.TryPlaceBuilding();
+
+// Or place at specific position
+BaseBuildingSystem.Instance.PlaceBuilding(foundationData, position, rotation);
+
+// Exit build mode
+BaseBuildingSystem.Instance.ExitBuildMode();
+
+// Damage, repair, and upgrade buildings
+BaseBuildingSystem.Instance.DamageBuilding(pieceId, 50f);
+BaseBuildingSystem.Instance.RepairBuilding(pieceId);
+BaseBuildingSystem.Instance.UpgradeBuilding(pieceId, BuildingMaterial.Stone);
+
+// Destroy buildings (with structural collapse)
+DestructionResult result = BaseBuildingSystem.Instance.DestroyBuilding(pieceId);
+Debug.Log($"Collapsed {result.collapsedPieces.Count} connected pieces");
+
+// Query buildings
+BuildingPiece piece = BaseBuildingSystem.Instance.GetPiece(pieceId);
+List<BuildingPiece> myBuildings = BaseBuildingSystem.Instance.GetPiecesByOwner(playerId);
+List<BuildingPiece> nearbyPieces = BaseBuildingSystem.Instance.GetPiecesInRadius(position, 10f);
+List<BuildingPiece> allWalls = BaseBuildingSystem.Instance.GetPiecesByCategory(BuildingCategory.Wall);
+
+// Validate placement before building
+PlacementInfo info = BaseBuildingSystem.Instance.ValidatePlacement(buildable, position, rotation);
+if (info.IsValid)
+{
+    Debug.Log("Ready to build!");
+}
+else
+{
+    Debug.Log($"Cannot build: {info.message}");
+}
+
+// Find snap points
+SnapInfo snapInfo = BaseBuildingSystem.Instance.FindSnapPoint(position, buildable);
+if (snapInfo.isSnapped)
+{
+    Vector3 snappedPos = snapInfo.snapPosition;
+}
+
+// Events
+BaseBuildingSystem.Instance.OnPiecePlaced += piece => Debug.Log($"Placed {piece.data.displayName}");
+BaseBuildingSystem.Instance.OnConstructionCompleted += piece => Debug.Log($"Finished building {piece.data.displayName}");
+BaseBuildingSystem.Instance.OnPieceDestroyed += (piece, result) => Debug.Log($"Destroyed! {result.collapsedPieces.Count} collapsed");
+BaseBuildingSystem.Instance.OnPieceUpgraded += (piece, oldMat, newMat) => Debug.Log($"Upgraded from {oldMat} to {newMat}");
+BaseBuildingSystem.Instance.OnBuildModeChanged += isActive => Debug.Log($"Build mode: {isActive}");
+```
+
+#### BuildableData (ScriptableObject)
+Define building pieces with properties, costs, sockets, and upgrades.
+```csharp
+// Create via: Assets > Create > UsefulScripts > BaseBuilding > BuildableData
+// Configure:
+// - Category: Foundation, Wall, Floor, Roof, Door, Stairs, etc.
+// - Material tier: Thatch, Wood, Stone, Metal, Armored, Concrete
+// - Health, construction time, decay rate
+// - Build costs and repair costs
+// - Snap sockets for connecting to other pieces
+// - Available upgrade paths with costs
+```
+
+#### Building Categories
+- **Foundation**: Base structures placed on ground
+- **Floor**: Horizontal walkable surfaces
+- **Wall/WallFrame**: Vertical barriers (frames accept doors/windows)
+- **Door/Window**: Placeable in wall frames
+- **Roof/RoofFlat**: Angled and flat roof pieces
+- **Stairs/Ramp**: Vertical traversal options
+- **Pillar/Beam**: Structural support elements
+- **Fence**: Half-height barriers
+- **Decoration**: Non-structural aesthetic pieces
+- **Functional**: Crafting stations, storage, etc.
+
+#### Material Tiers
+- **Thatch**: Tier 0 - Very weak, very cheap
+- **Wood**: Tier 1 - Weak but accessible
+- **Stone**: Tier 2 - Moderate durability
+- **Metal**: Tier 3 - Strong
+- **Armored**: Tier 4 - Very strong
+- **Concrete**: Tier 5 - Maximum durability
+- **Glass**: Special - Transparent but fragile
+
+#### Features
+- **Snap-based Placement**: Socket system for precise piece connection
+- **Grid Snapping**: Optional grid alignment for foundations
+- **Preview System**: Ghost visualization with valid/invalid coloring
+- **Construction Progress**: Timed construction with visual progression
+- **Structural Integrity**: Stability propagation from foundations
+- **Collapse System**: Connected pieces collapse when support is lost
+- **Decay System**: Buildings decay without player interaction
+- **Upgrade System**: Upgrade pieces to higher material tiers
+- **Resource Integration**: Connect to inventory for material costs
+- **Multi-Owner Support**: Track building ownership for multiplayer
+
+---
+
 ## 🎮 Usage Tips
 
 1. **Namespaces**: All scripts use `UsefulScripts.*` namespace. Add `using UsefulScripts.Core;` etc.
