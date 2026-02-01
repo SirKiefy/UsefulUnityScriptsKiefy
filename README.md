@@ -27,7 +27,7 @@ Assets/
     ├── Input/                 # Rebindable input management
     ├── Achievement/           # Achievement tracking & rewards
     ├── ProceduralGeneration/  # Procedural content generation utilities
-    ├── Weapons/               # Modular weapon crafting & customization system
+    ├── Combat/                # Modular armor system for vehicles, mechs, players
     └── RPG/                   # Complete RPG & JRPG systems
         ├── CharacterStatsSystem  # Comprehensive stats, attributes, leveling
         ├── CombatSystem          # Turn-based, ATB, real-time combat
@@ -871,6 +871,65 @@ var patterns = new List<WaveFunctionCollapse.TilePattern>
 int[,] generatedMap = WaveFunctionCollapse.Generate(
     width: 50, height: 50, patterns: patterns, seed: 12345
 );
+```
+
+---
+
+### Combat System
+
+#### ModularArmorSystem
+Complete modular armor system for vehicles, tanks, mechs, players, and other entities. Supports zone-based damage, multiple damage types, armor degradation, and repair mechanics.
+
+```csharp
+// Attach ModularArmorSystem to any entity
+var armorSystem = GetComponent<ModularArmorSystem>();
+
+// Take damage to a specific zone
+DamageResult result = armorSystem.TakeDamage(100f, ArmorZone.Front, DamageType.Kinetic);
+Debug.Log($"Absorbed: {result.absorbedDamage}, Penetrating: {result.penetratingDamage}");
+
+// Take damage to a random zone based on hit probabilities
+DamageResult randomResult = armorSystem.TakeDamageRandom(50f, DamageType.Explosive);
+
+// Check armor status
+float totalArmor = armorSystem.TotalArmorPercent;
+ArmorState frontState = armorSystem.GetZoneState(ArmorZone.Front);
+bool hasArmor = armorSystem.HasAnyArmor;
+
+// Repair armor
+armorSystem.RepairZone(ArmorZone.Front, 50f);
+armorSystem.FullRepairAll();
+
+// Add/remove armor plates dynamically
+var newPlate = new ArmorPlate("Reactive Armor", 150f, 0.4f, 75f);
+armorSystem.AddPlateToZone(ArmorZone.Front, newPlate);
+
+// Events
+armorSystem.OnDamageReceived += (result) => Debug.Log($"Hit {result.hitZone}!");
+armorSystem.OnZoneBreached += (zone) => Debug.Log($"{zone} armor destroyed!");
+armorSystem.OnAllArmorDestroyed += () => Debug.Log("All armor breached!");
+```
+
+**Features:**
+- **Armor Zones**: Front, Back, Sides, Top, Bottom, Turret, Cockpit, Engine, Legs, Arms, Head, Core, Tracks, Wings, Tail
+- **Damage Types**: Kinetic, Explosive, Energy, Fire, Ice, Electric, Corrosive, Piercing, Concussive
+- **Armor States**: Pristine, Damaged, Compromised, Critical, Breached, Destroyed
+- **Layered Armor**: Multiple plates per zone with penetration mechanics
+- **Resistance System**: Per-plate damage type resistances
+- **Slope/Ricochet**: Angle-based ricochet calculations for kinetic damage
+- **Auto-Repair**: Configurable passive armor regeneration
+- **ScriptableObject Config**: Create reusable armor configurations
+
+```csharp
+// Create armor configuration via ScriptableObject
+[CreateAssetMenu(menuName = "UsefulScripts/Combat/Modular Armor Config")]
+// Configure zones, plates, resistances in Inspector
+
+// Example: Tank armor setup
+var tankArmor = new ArmorZoneData(ArmorZone.Front, hitChance: 0.3f);
+tankArmor.AddPlate(new ArmorPlate("Composite Front", 200f, 0.5f, 100f));
+tankArmor.AddPlate(new ArmorPlate("Reactive Layer", 100f, 0.3f, 50f));
+armorSystem.AddZone(tankArmor);
 ```
 
 ---
