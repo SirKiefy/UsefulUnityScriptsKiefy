@@ -11,7 +11,7 @@ Assets/
     ├── Utilities/             # Helper utilities (Timer, Tween, MathUtils)
     ├── Player/                # Player controllers & health system
     ├── FPS/                   # Advanced FPS movement (Titanfall-inspired)
-    ├── SpaceShip/             # Complete spaceship systems (Elite/Star Citizen-inspired)
+    ├── ColossusMechanics/     # Shadow of the Colossus climbing & grip system
     ├── Camera/                # Camera follow & shake systems
     ├── UI/                    # UI management & transitions
     ├── Audio/                 # Audio management system
@@ -187,258 +187,101 @@ if (mantle.CanMantle) { ShowMantlePrompt(); }
 
 ---
 
-### SpaceShip Systems (Elite Dangerous/Star Citizen-Inspired)
+### Colossus Mechanics (Shadow of the Colossus-Inspired)
 
-Complete spaceship movement, combat, and systems management inspired by Elite Dangerous, Star Citizen, No Man's Sky, and 4X strategy games. Use individual components or the complete integrated suite.
+Complete climbing and gripping system inspired by Shadow of the Colossus. Allows players to grab onto and climb massive creatures or surfaces while managing stamina.
 
-#### SpaceShipController
-Core 6-DOF (degrees of freedom) ship movement with realistic Newtonian physics:
-- Main, reverse, lateral, and vertical thrust
-- Pitch, yaw, and roll rotation
-- Boost system with cooldown
-- Throttle control with presets
-- Speed limiting and inertia
+#### GripSystem
+Core player component for gripping and climbing:
+- Grip onto any surface or specific grip points
+- Stamina management with drain rates for gripping vs climbing
+- Climb in any direction while attached
+- Attack weak points with charged attacks
+- Jump off with directional control
+- Automatic stamina recovery when grounded
 
 ```csharp
-// Attach to ship with Rigidbody
-var controller = GetComponent<SpaceShipController>();
+// Attach to player with CharacterController
+// Events for UI integration:
+gripSystem.OnStaminaChanged += (current, max) => UpdateStaminaBar(current / max);
+gripSystem.OnGripStart += () => ShowClimbingUI();
+gripSystem.OnShakeStart += () => ShowWarning("Hold on!");
 
-// Movement control
-controller.SetThrustInput(strafe, vertical, forward);
-controller.SetRotationInput(pitch, yaw, roll);
-controller.SetThrottle(0.75f);
-
-// Boost
-controller.StartBoost();
-controller.OnBoostStart += () => PlaySound("boost");
-
-// Flight assist modes
-controller.SetFlightAssist(FlightAssistMode.Full);   // Dampened movement
-controller.SetFlightAssist(FlightAssistMode.Off);    // Pure Newtonian
-controller.CycleFlightAssist();  // Toggle modes
+// Properties for state checks:
+if (gripSystem.IsGripping) { /* player is attached */ }
+if (gripSystem.IsLowStamina) { /* show warning */ }
+float chargePercent = gripSystem.ChargePercent; // for attack charge UI
 ```
 
-#### FlightAssistSystem
-Advanced flight assist with velocity matching and approach control:
-- Linear and rotational dampening
-- Velocity matching with targets
-- Approach assist for docking
-- Drift cancellation
-- Auto-orient toward targets
+#### ClimbableColossus
+Attach to giant creatures or objects that can be climbed:
+- Manages multiple grip points
+- Periodic shake events to test player's grip
+- Movement along waypoints
+- Health system with weak point damage multipliers
+- Events for shake start/end
 
 ```csharp
-var flightAssist = GetComponent<FlightAssistSystem>();
+// Setup on a boss creature
+colossus.OnShakeStart += () => PlayShakeAnimation();
+colossus.OnDeath += () => TriggerVictoryCutscene();
 
-// Match velocity with another ship
-flightAssist.StartVelocityMatch(targetShip);
-
-// Automatic slowdown when approaching target
-flightAssist.StartApproachAssist(station, desiredSpeed: 50f);
-
-// Auto-orient toward target
-flightAssist.SetAutoOrientTarget(enemy);
+// Player detection increases shake frequency
+// Find nearest grip point:
+GripPoint point = colossus.FindNearestGripPointInRange(playerPos, 3f);
 ```
 
-#### WarpDriveSystem
-Multiple FTL travel modes for interstellar gameplay:
-- **Supercruise**: In-system fast travel with variable speed
-- **Hyperspace Jump**: Inter-system travel with charge time
-- **Quantum Travel**: Point-to-point fast travel
+#### GripPoint
+Defines specific locations on a colossus that can be grabbed:
+- Configurable grip radius
+- Weak point designation with damage multipliers
+- Fur grip bonus (reduces stamina drain)
+- Approach direction requirements
+- Visual highlighting
 
 ```csharp
-var warpDrive = GetComponent<WarpDriveSystem>();
-
-// Supercruise (in-system travel)
-warpDrive.StartSupercruiseCharge();
-warpDrive.SetSupercruiseThrottle(0.8f);
-warpDrive.DisengageSupercruise();
-
-// Hyperspace jump (inter-system)
-warpDrive.StartHyperspaceCharge(destinationPosition);
-warpDrive.OnHyperspaceJumpComplete += () => UpdateStarMap();
-
-// Quantum travel (point-to-point)
-warpDrive.SetQuantumTarget(beacon);
-warpDrive.StartQuantumCharge();
-
-// Fuel management
-warpDrive.ConsumeFuel(amount);
-warpDrive.Refuel();
+// Place on climbable locations (fur patches, ledges, etc.)
+// Properties:
+if (gripPoint.IsWeakPoint) { ShowWeakPointIndicator(); }
+float bonus = gripPoint.FurGripBonus; // typically 1.2 for furry surfaces
 ```
 
-#### TurretSystem
-Weapon turret with tracking and firing:
-- Fixed, gimballed, and turreted mount types
-- Lead prediction for moving targets
-- Heat and ammunition management
-- Multi-fire point support
+#### ColossusShakeEffect
+Player feedback during shake events:
+- Camera shake with Perlin noise
+- Controller rumble support
+- Audio feedback (strain sounds, warnings)
+- Low stamina visual effects
 
 ```csharp
-var turret = GetComponent<TurretSystem>();
+// Attach to player alongside GripSystem
+// Automatically handles:
+// - Camera shake when colossus shakes
+// - Increased shake when stamina is low
+// - Strain sounds at low stamina
 
-// Aiming
-turret.SetAimPoint(worldPosition);
-turret.TrackTarget(enemy);
-
-// Firing
-turret.StartFiring();
-turret.Fire();  // Single shot
-turret.StopFiring();
-
-// Check lead position for UI
-Vector3 lead = turret.CalculateLeadPosition(target);
-if (turret.CanFire) { ShowFireIndicator(); }
+// Manual trigger:
+shakeEffect.TriggerShake(0.5f, 1f); // intensity, duration
 ```
 
-#### ShipWeaponSystem
-Complete weapon management for multiple hardpoints:
-- Weapon hardpoint configuration
-- Firing groups (primary/secondary)
-- Power management for weapons
-- Coordinated targeting
-
+#### Complete Setup Example
 ```csharp
-var weapons = GetComponent<ShipWeaponSystem>();
+// 1. Player Setup:
+// - Add CharacterController
+// - Add GripSystem
+// - Add ColossusShakeEffect
 
-// Firing groups
-weapons.StartFiringGroup(0);  // Primary fire
-weapons.StartFiringGroup(1);  // Secondary fire
-weapons.CycleFiringGroup();
+// 2. Colossus Setup:
+// - Add ClimbableColossus to root
+// - Add GripPoint children at climbable locations
+// - Mark weak points (e.g., head, back)
+// - Configure shake settings
 
-// Hardpoint management
-weapons.AssignToFiringGroup(hardpointIndex: 0, groupIndex: 0);
-weapons.AimAt(targetPosition);
-
-// Power for weapons
-weapons.ConsumePower(amount);
-float heat = weapons.GetAverageHeat();
-```
-
-#### ShipTargetingSystem
-Target acquisition and tracking:
-- Target scanning and selection
-- Lock-on mechanics with progress
-- Lead indicator calculation
-- Subsystem targeting
-- IFF (Identification Friend/Foe)
-- Threat assessment
-
-```csharp
-var targeting = GetComponent<ShipTargetingSystem>();
-
-// Target selection
-targeting.TargetInCrosshairs();
-targeting.NextTarget();
-targeting.TargetNearestHostile();
-targeting.TargetHighestThreat();
-
-// Lock-on
-targeting.OnLockAcquired += () => PlaySound("locked");
-if (targeting.IsLocked) { FireMissile(); }
-
-// Lead indicator
-Vector3 leadPos = targeting.LeadPosition;
-bool onTarget = targeting.IsLeadOnTarget(tolerance: 5f);
-
-// Subsystem targeting
-targeting.CycleSubsystem();
-targeting.TargetSubsystem(SubsystemType.Engines);
-```
-
-#### ShipCombatManager
-Combat state and damage management:
-- Combat state tracking
-- Damage distribution (shields → armor → hull)
-- Point defense against missiles
-- Countermeasures (chaff/flares)
-- Evasive maneuvers
-
-```csharp
-var combat = GetComponent<ShipCombatManager>();
-
-// Combat engagement
-combat.EngageEnemy(enemy);
-combat.OnEnemyEngaged += (e) => PlayBattleMusic();
-
-// Countermeasures
-combat.DeployChaff();
-combat.DeployFlare();
-
-// Evasive maneuvers
-combat.StartEvasive();
-Vector3 evasiveDir = combat.GetEvasiveDirection();
-
-// Power priority
-combat.SetPowerPriority(PowerPriority.Weapons);
-```
-
-#### ShipSubsystems
-Module and power management:
-- Power plant and distribution
-- Multiple subsystem types (engines, shields, weapons, life support, etc.)
-- Subsystem damage and repair
-- Efficiency based on health
-
-```csharp
-var subsystems = GetComponent<ShipSubsystems>();
-
-// Power distribution (Elite Dangerous style)
-subsystems.SetPowerDistribution(weapons: 0.5f, shields: 0.3f, engines: 0.2f);
-subsystems.IncreasePower(PowerCategory.Weapons);
-
-// Subsystem management
-subsystems.ToggleSubsystem(SubsystemType.Weapons);
-float efficiency = subsystems.GetSubsystemEfficiency(SubsystemType.Engines);
-
-// Damage and repair
-subsystems.DamageSubsystem(SubsystemType.Engines, damage: 30f);
-subsystems.RepairSubsystem(SubsystemType.Engines, amount: 50f);
-subsystems.FullRepair();
-```
-
-#### ShipHealthSystem
-Ship durability with multiple layers:
-- Hull integrity
-- Armor with damage reduction
-- Shields with regeneration and types
-- Critical damage states
-- Destruction handling
-
-```csharp
-var health = GetComponent<ShipHealthSystem>();
-
-// Take damage (full pipeline)
-health.TakeDamage(100f, DamageType.Kinetic, hitPoint);
-
-// Shield management
-health.BoostShield(amount);  // Shield cell bank
-health.OnShieldDepleted += () => PlayWarning();
-
-// Status checks
-if (health.IsCritical) { EnableEmergencyPower(); }
-float shieldPercent = health.ShieldPercent;
-
-// Shield types (like Elite Dangerous)
-health.SetShieldType(ShieldType.BiWeave);    // Fast regen
-health.SetShieldType(ShieldType.Prismatic);  // High capacity
-```
-
-#### ShipInputHandler
-Complete input mapping for all ship systems:
-- Flight controls (WASD, mouse)
-- Weapon controls
-- Targeting bindings
-- Warp controls
-- Power management shortcuts
-
-```csharp
-// Attach to ship - all input is handled automatically
-var input = GetComponent<ShipInputHandler>();
-
-// Configuration
-input.SetMouseSensitivity(2f);
-input.SetInvertPitch(true);
-input.ToggleMouseMode();  // Relative vs absolute
+// 3. UI Integration:
+gripSystem.OnStaminaChanged += (cur, max) => staminaBar.fillAmount = cur / max;
+gripSystem.OnGripStart += () => staminaBar.gameObject.SetActive(true);
+gripSystem.OnGripEnd += () => staminaBar.gameObject.SetActive(false);
+colossus.OnDamageTaken += (dmg) => ShowDamageNumber(dmg);
 ```
 
 ---
