@@ -38,6 +38,8 @@ namespace UsefulScripts.ColossusMechanics
         private float shakeTimer;
         private float nextShakeTime;
         private Vector3 shakeOffset;
+        private float originalShakeIntensity;
+        private bool isCustomShake;
 
         // Movement state
         private int currentWaypointIndex;
@@ -193,8 +195,9 @@ namespace UsefulScripts.ColossusMechanics
             if (isShaking || !isAlive) return;
 
             isShaking = true;
+            isCustomShake = true;
             shakeTimer = duration;
-            float originalIntensity = shakeIntensity;
+            originalShakeIntensity = shakeIntensity;
             shakeIntensity = intensity;
             OnShakeStart?.Invoke();
         }
@@ -208,6 +211,14 @@ namespace UsefulScripts.ColossusMechanics
 
             isShaking = false;
             shakeOffset = Vector3.zero;
+            
+            // Restore original intensity if this was a custom shake
+            if (isCustomShake)
+            {
+                shakeIntensity = originalShakeIntensity;
+                isCustomShake = false;
+            }
+            
             ScheduleNextShake();
             OnShakeEnd?.Invoke();
         }
