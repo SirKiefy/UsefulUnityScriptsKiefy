@@ -215,12 +215,17 @@ namespace UsefulScripts.Combat
             // Apply damage to armor
             float armorDamage = effectiveDamage * 0.5f; // Half damage goes to armor degradation
             ArmorState previousState = state;
+            
+            // Store health percent before applying damage for penetration calculation
+            float previousHealthPercent = HealthPercent;
             currentHealth = Mathf.Max(0f, currentHealth - armorDamage);
 
-            // Calculate penetrating damage based on armor health
+            // Calculate penetrating damage based on armor health before it was destroyed
             if (currentHealth <= 0)
             {
-                penetratingDamage = effectiveDamage * (1f - HealthPercent);
+                // Penetrating damage based on how much damage exceeded the remaining armor
+                float overkillFactor = 1f - previousHealthPercent;
+                penetratingDamage = effectiveDamage * Mathf.Clamp01(overkillFactor);
                 currentHealth = 0f;
             }
 
@@ -564,7 +569,6 @@ namespace UsefulScripts.Combat
         [SerializeField] private bool canRepair = true;
         [SerializeField] private float autoRepairRate = 0f;
         [SerializeField] private float autoRepairDelay = 5f;
-        [SerializeField] private bool useRandomZoneSelection = true;
 
         // State
         private float lastDamageTime;
