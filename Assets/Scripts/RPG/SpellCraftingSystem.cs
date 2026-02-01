@@ -284,7 +284,7 @@ namespace UsefulScripts.RPG
 
         public CraftedSpell()
         {
-            createdAt = DateTime.Now;
+            createdAt = DateTime.UtcNow;
         }
 
         /// <summary>
@@ -341,7 +341,7 @@ namespace UsefulScripts.RPG
 
         public SpellCraftingResult()
         {
-            craftedAt = DateTime.Now;
+            craftedAt = DateTime.UtcNow;
         }
     }
 
@@ -603,7 +603,7 @@ namespace UsefulScripts.RPG
         private SpellCraftingProgress progress = new SpellCraftingProgress();
         private List<CraftedSpell> craftedSpells = new List<CraftedSpell>();
         private Dictionary<string, int> craftingHistory = new Dictionary<string, int>();
-        private System.Random random = new System.Random();
+        private System.Random random = new System.Random(Environment.TickCount);
 
         // Delegates for inventory integration
         public Func<string, int> GetComponentCount;
@@ -686,7 +686,7 @@ namespace UsefulScripts.RPG
         public void SetCraftingStyle(SpellCraftingStyle style)
         {
             if (currentStyle == style) return;
-            if (!config?.allowMultipleCraftingStyles ?? false) return;
+            if (config != null && !config.allowMultipleCraftingStyles) return;
 
             currentStyle = style;
             OnCraftingStyleChanged?.Invoke(style);
@@ -1168,7 +1168,8 @@ namespace UsefulScripts.RPG
 
             // Apply power variance for freestyle
             float variance = config?.freestylePowerVariance ?? 0.2f;
-            float varianceRoll = 1f + ((float)(random.NextDouble() * 2 - 1) * variance);
+            float randomOffset = (float)(random.NextDouble() * 2.0 - 1.0); // Range: [-1, 1]
+            float varianceRoll = 1f + (randomOffset * variance);
             spell.power *= varianceRoll;
 
             // Apply form effects
