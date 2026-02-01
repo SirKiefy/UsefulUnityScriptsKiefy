@@ -26,6 +26,7 @@ Assets/
     ├── Input/                 # Rebindable input management
     ├── Achievement/           # Achievement tracking & rewards
     ├── ProceduralGeneration/  # Procedural content generation utilities
+    ├── Weapons/               # Modular weapon crafting & customization system
     └── RPG/                   # Complete RPG & JRPG systems
         ├── CharacterStatsSystem  # Comprehensive stats, attributes, leveling
         ├── CombatSystem          # Turn-based, ATB, real-time combat
@@ -1083,6 +1084,95 @@ var captureStats = SummonSystem.Instance.GetCaptureStatistics();
 SummonSystem.Instance.OnMonsterCaptured += monster => Debug.Log($"Captured {monster.nickname}!");
 SummonSystem.Instance.OnMonsterEvolved += (monster, evo) => Debug.Log($"Evolved into {evo.evolvedMonsterName}!");
 ```
+
+---
+
+### Modular Weapon System
+
+Complete weapon crafting and customization system with modular attachments, firing modes, and ammo types.
+
+#### ModularWeaponSystem
+Central manager for weapon crafting, attachment management, and weapon customization.
+```csharp
+// Create a weapon from data
+var weapon = ModularWeaponSystem.Instance.CreateWeapon(assaultRifleData);
+
+// Install attachments
+ModularWeaponSystem.Instance.InstallAttachment(weapon, redDotScopeData);
+ModularWeaponSystem.Instance.InstallAttachment(weapon, suppressorData);
+ModularWeaponSystem.Instance.InstallAttachment(weapon, extendedMagData);
+
+// Remove attachments (returns to inventory)
+ModularWeaponSystem.Instance.UninstallAttachment(weapon, AttachmentType.Scope);
+
+// Change firing mode
+weapon.CycleFiringMode();  // Cycles through supported modes
+weapon.SetFiringMode(FiringMode.Burst);
+
+// Change ammo type
+weapon.SetAmmoType(AmmoType.ArmorPiercing);
+
+// Get weapon stats (with all attachment modifiers applied)
+float damage = weapon.GetFinalStat(WeaponStatType.Damage);
+float fireRate = weapon.GetFinalStat(WeaponStatType.FireRate);
+float accuracy = weapon.GetFinalStat(WeaponStatType.Accuracy);
+var allStats = weapon.GetAllStats();
+
+// Compare stats before/after adding an attachment
+var comparison = ModularWeaponSystem.Instance.GetStatComparison(weapon, newAttachment);
+Debug.Log($"Damage change: {comparison[WeaponStatType.Damage]:+0.0;-0.0}");
+
+// Ammo management
+weapon.Reload();
+weapon.ConsumeAmmo(1);
+weapon.AddReserveAmmo(60);
+
+// Craft weapons and attachments
+ModularWeaponSystem.Instance.StartCraftWeapon("ak47_recipe", result => {
+    Debug.Log($"Crafted: {result.craftedWeapon.customName}");
+});
+
+ModularWeaponSystem.Instance.StartCraftAttachment("holographic_sight_recipe");
+
+// Unlock new recipes
+ModularWeaponSystem.Instance.UnlockWeaponRecipe("sniper_recipe");
+ModularWeaponSystem.Instance.UnlockAttachmentRecipe("thermal_scope_recipe");
+
+// Create and use blueprints (weapon loadout presets)
+var blueprint = ModularWeaponSystem.Instance.CreateBlueprint(weapon, "My CQB Setup");
+var newWeapon = ModularWeaponSystem.Instance.CreateFromBlueprint(blueprint);
+
+// Get compatible attachments for a slot
+var compatibleScopes = ModularWeaponSystem.Instance.GetCompatibleAttachments(weapon, AttachmentType.Scope);
+
+// Events
+ModularWeaponSystem.Instance.OnWeaponCrafted += result => Debug.Log($"Crafted {result.craftedWeapon.customName}");
+ModularWeaponSystem.Instance.OnAttachmentInstalled += (weapon, attachment) => Debug.Log($"Installed {attachment.data.attachmentName}");
+ModularWeaponSystem.Instance.OnFiringModeChanged += (weapon, mode) => Debug.Log($"Mode: {mode}");
+```
+
+#### Attachment Types
+The system supports multiple attachment slots:
+- **Scope**: Red dots, holographic sights, magnified optics, thermal scopes
+- **Barrel**: Suppressors, muzzle brakes, compensators, extended barrels
+- **Magazine**: Extended mags, drum mags, fast-reload mags
+- **Stock**: Adjustable stocks, folding stocks, buffer tubes
+- **Trigger**: Light triggers, heavy triggers, binary triggers
+- **Rails** (Top/Bottom/Left/Right): Lasers, flashlights, grips, bipods
+
+#### Firing Modes
+- SemiAutomatic, Burst, FullAutomatic, BoltAction, PumpAction, Selective
+
+#### Ammo Types
+- Standard calibers: 9mm, .45 ACP, 5.56, 7.62, .50 BMG
+- Shotgun: 12 Gauge, 20 Gauge
+- Special: Energy, Explosive, Incendiary, ArmorPiercing, Hollow, Subsonic, Tracer
+
+#### Weapon Stats (Affected by Attachments)
+- Damage, FireRate, Range, Accuracy, RecoilControl
+- ReloadSpeed, MagazineSize, AimDownSightSpeed, MovementSpeed
+- MuzzleVelocity, Penetration, Stability, Handling
+- HipFireAccuracy, SwapSpeed, SprintToFireTime, NoiseReduction
 
 ---
 
