@@ -722,18 +722,20 @@ namespace UsefulScripts.AnimeEldenRingJRPG
             var alive = GetAlivePartyMembers();
             if (alive.Count == 0) return;
 
-            int expPerMember = totalExp / alive.Count;
+            int baseExpPerMember = totalExp / alive.Count;
             foreach (var member in alive)
             {
+                int expForMember = baseExpPerMember;
+
                 // Friendship Power trait: bonus exp when all allies alive
                 if (member.characterData != null &&
                     member.characterData.traits.Contains(AnimeBattleTrait.FriendshipPower) &&
                     alive.Count == partyMembers.Count)
                 {
-                    expPerMember = Mathf.RoundToInt(expPerMember * 1.2f);
+                    expForMember = Mathf.RoundToInt(expForMember * 1.2f);
                 }
 
-                member.AddExperience(expPerMember);
+                member.AddExperience(expForMember);
             }
         }
 

@@ -272,7 +272,8 @@ namespace UsefulScripts.AnimeEldenRingJRPG
 
             int amount = drop.amount;
 
-            // Handle corrupted runes
+            // Handle corrupted runes: risk/reward — on failure, lose a portion of held runes
+            // and forfeit the drop; on success, gain bonus runes
             if (drop.runeType == RuneType.Corrupted && config != null)
             {
                 float riskRoll = UnityEngine.Random.Range(0f, 1f);

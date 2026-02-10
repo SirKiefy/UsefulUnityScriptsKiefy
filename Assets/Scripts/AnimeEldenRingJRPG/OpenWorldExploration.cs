@@ -466,7 +466,7 @@ namespace UsefulScripts.AnimeEldenRingJRPG
         }
 
         /// <summary>
-        /// Rests at a site of grace. Heals party, respawns enemies, saves progress.
+        /// Rests at a site of grace. Heals party and respawns enemies.
         /// </summary>
         public void RestAtSiteOfGrace(string siteId)
         {
