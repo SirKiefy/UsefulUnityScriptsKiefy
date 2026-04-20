@@ -32,7 +32,7 @@ Assets/
     ├── Achievement/           # Achievement tracking & rewards
     ├── ProceduralGeneration/  # Procedural content generation utilities
     ├── Combat/                # Modular armor system for vehicles, mechs, players
-    └── RPG/                   # Complete RPG & JRPG systems
+    ├── RPG/                   # Complete RPG & JRPG systems
         ├── CharacterStatsSystem  # Comprehensive stats, attributes, leveling
         ├── CombatSystem          # Turn-based, ATB, real-time combat
         ├── PartySystem           # Party management, formations, synergies
@@ -42,6 +42,13 @@ Assets/
         ├── RelationshipSystem    # Social links, romance, factions
         ├── SkillSystem           # Skill learning, inheritance, cooldowns
         └── SummonSystem          # Monster taming, evolution, summoning
+    └── AnimeEldenRingJRPG/    # Anime Elden Ring JRPG baseline (taming & crafting)
+        ├── TamingSystem          # Creature capture, bonding, evolution, party management
+        ├── AnimeCraftingSystem   # Soul forging, rune inscription, alchemy, cooking
+        ├── OpenWorldExploration  # Regions, sites of grace, weather, day/night, fast travel
+        ├── BossSystem            # Soulslike boss encounters with phases & weak points
+        ├── AnimeCharacterSystem  # Anime archetypes, awakening, traits, relationships
+        └── RuneSystem            # Rune currency, stat leveling, death/recovery, shops
 ```
 
 ## 🚀 Quick Start
@@ -1587,6 +1594,213 @@ Define building pieces with properties, costs, sockets, and upgrades.
 - **Upgrade System**: Upgrade pieces to higher material tiers
 - **Resource Integration**: Connect to inventory for material costs
 - **Multi-Owner Support**: Track building ownership for multiplayer
+
+---
+
+### Anime Elden Ring JRPG (Taming & Crafting Baseline)
+
+A complete baseline for an anime-styled Elden Ring JRPG featuring creature taming, crafting, open-world exploration, boss encounters, anime character systems, and rune-based progression. All systems are interconnected and designed to work together.
+
+#### TamingSystem
+Creature capture, bonding, evolution, and party management with anime JRPG flair.
+```csharp
+// Capture a wild creature
+CaptureResult result = tamingSystem.AttemptCapture(creatureData, targetHealthPercent: 0.2f, baitItemId: "honey");
+if (result.success) Debug.Log($"Captured {result.capturedCreature.creatureData.creatureName}!");
+
+// Ritual capture for divine/mythical creatures
+CaptureResult ritualResult = tamingSystem.AttemptRitualCapture(divineCreature, "sacredOrb", bondPower: 80f);
+
+// Party management
+tamingSystem.AddToParty(creature);
+tamingSystem.SwapCreature(partyCreature, storageCreature);
+tamingSystem.SummonCreature(0); // Summon first party creature
+
+// Bonding
+tamingSystem.FeedCreature(creature, "berryItem");
+tamingSystem.PetCreature(creature);
+tamingSystem.AwardBattleBondExp(creature);
+
+// Evolution
+if (creature.CanEvolve())
+    tamingSystem.EvolveCreature(creature, "fireEvolution");
+
+// Experience distribution
+tamingSystem.DistributeBattleExp(totalExp: 500);
+
+// Events
+tamingSystem.OnCreatureCaptured += c => Debug.Log($"Tamed: {c.creatureData.creatureName}");
+tamingSystem.OnCreatureEvolved += (c, tier) => Debug.Log($"Evolved to {tier}!");
+tamingSystem.OnBondRankUp += (c, rank) => Debug.Log($"Bond rank: {rank}");
+```
+
+#### AnimeCraftingSystem
+JRPG-style crafting with soul forging, rune inscription, alchemy, cooking, and equipment creation.
+```csharp
+// Add materials
+craftingSystem.AddMaterial("ironOre", 10);
+craftingSystem.AddMaterial("soulFragment_fire", 3);
+
+// Learn and craft recipes
+craftingSystem.LearnRecipe("soulBlade_fire");
+bool started = craftingSystem.StartCrafting("soulBlade_fire", stationId: "forge01");
+
+// Instant craft
+CraftingResult result = craftingSystem.InstantCraft("healthPotion");
+Debug.Log($"Crafted {result.resultItemName} - Quality: {result.quality}");
+
+// Query recipes
+List<CraftingRecipe> known = craftingSystem.GetKnownRecipes(CraftingDiscipline.SoulForging);
+List<CraftingRecipe> craftable = craftingSystem.GetCraftableRecipes(CraftingDiscipline.Alchemy);
+int level = craftingSystem.GetDisciplineLevel(CraftingDiscipline.Cooking);
+
+// Events
+craftingSystem.OnCraftingComplete += result => Debug.Log($"Crafted: {result.resultItemName}");
+craftingSystem.OnDisciplineLevelUp += (disc, lvl) => Debug.Log($"{disc} reached level {lvl}!");
+```
+
+#### OpenWorldExploration
+Elden Ring–inspired open world with regions, sites of grace, weather, day/night cycle, and fast travel.
+```csharp
+// Enter and discover regions
+exploration.EnterRegion("ashlands");
+var region = exploration.GetCurrentRegion();
+var connected = exploration.GetConnectedRegions();
+
+// Sites of grace
+exploration.DiscoverSiteOfGrace("grace_ashlands_01");
+exploration.RestAtSiteOfGrace("grace_ashlands_01"); // Heals party, respawns enemies
+exploration.FastTravel("grace_forest_02");
+
+// Points of interest
+exploration.DiscoverPointOfInterest("dungeon_01");
+exploration.CompletePointOfInterest("dungeon_01");
+var nests = exploration.GetPointsOfInterest(PointOfInterestType.CreatureNest);
+
+// Time and weather
+float hour = exploration.GetCurrentHour();
+exploration.WaitUntilDawn();
+
+// Events
+exploration.OnRegionDiscovered += r => Debug.Log($"Discovered: {r.regionName}");
+exploration.OnSiteOfGraceRested += s => Debug.Log($"Rested at {s.siteName}");
+exploration.OnWeatherChanged += w => Debug.Log($"Weather: {w}");
+exploration.OnTimeOfDayChanged += t => Debug.Log($"Time: {t}");
+```
+
+#### BossSystem
+Soulslike boss encounters with phases, weak points, stagger mechanics, and anime-style transitions.
+```csharp
+// Start a boss fight
+bossSystem.StartBossFight("margit_the_fell");
+
+// Deal damage (with elemental and weak point targeting)
+float dealt = bossSystem.DealDamageToBoss(150f, CreatureElement.Lightning, weakPointId: "head");
+
+// Query boss state
+float healthPercent = bossSystem.CurrentHealthPercent;
+bool staggered = bossSystem.IsStaggered;
+var attacks = bossSystem.GetCurrentPhaseAttacks();
+var weakPoints = bossSystem.GetExposedWeakPoints();
+bool defeated = bossSystem.IsBossDefeated("margit_the_fell");
+
+// Retry after death
+bossSystem.FailBossFight();
+bossSystem.RetryBossFight();
+
+// Events
+bossSystem.OnBossFightStarted += boss => Debug.Log($"Fight: {boss.bossTitle}");
+bossSystem.OnPhaseTransition += (from, to) => Debug.Log($"Phase: {from} → {to}");
+bossSystem.OnBossStaggered += () => Debug.Log("Boss staggered! Attack now!");
+bossSystem.OnBossDefeated += (boss, rewards) => Debug.Log($"Defeated! Runes: {rewards.runeReward}");
+bossSystem.OnWeakPointBroken += wp => Debug.Log($"Weak point broken: {wp.location}");
+```
+
+#### AnimeCharacterSystem
+Anime JRPG character management with archetypes, awakening transformations, battle traits, and relationships.
+```csharp
+// Add characters to party
+characterSystem.AddToParty(protagonist);
+characterSystem.AddToParty(rivalCharacter);
+
+// Combat
+character.TakeDamage(100f); // Plot Armor trait may trigger!
+character.UseAbility("blazingStrike");
+character.AddUltimateGauge(20f);
+
+// Awakening transformation
+character.ActivateAwakening(AwakeningState.Transcended);
+characterSystem.UpdateAwakenings(Time.deltaTime);
+
+// Relationships
+characterSystem.BuildBattleBond("hero_01", "rival_01", amount: 10f);
+RelationshipType rel = character.GetRelationship("rival_01");
+bool hasCombo = character.HasComboUltimate("rival_01");
+
+// Party management
+characterSystem.FullPartyHeal(); // Rest at site of grace
+characterSystem.DistributeExperience(1000);
+bool wiped = characterSystem.IsPartyWiped();
+
+// Events
+character.OnAwakeningActivated += (c, state) => Debug.Log($"{c.characterData.characterName} awakened!");
+character.OnTraitTriggered += (c, trait) => Debug.Log($"Trait triggered: {trait}");
+character.OnLevelUp += (c, lvl) => Debug.Log($"Level up: {lvl}");
+```
+
+#### RuneSystem
+Elden Ring–style rune currency for stat leveling, purchasing, and risk/reward on death.
+```csharp
+// Gain runes
+runeSystem.GainRunes(new RuneDrop(RuneType.Common, 500, "enemy01", "Hollow Soldier"));
+runeSystem.AddRunes(1000); // Direct add
+
+// Level up stats
+if (runeSystem.CanLevelUp(LevelUpStat.Vigor))
+    runeSystem.LevelUpStat(LevelUpStat.Vigor);
+int cost = runeSystem.GetLevelUpCost(LevelUpStat.Strength);
+float bonus = runeSystem.GetStatBonus(LevelUpStat.Vigor);
+
+// Death and recovery
+runeSystem.OnPlayerDeath(deathPosition, regionId: "ashlands");
+// ... player respawns, travels back ...
+runeSystem.RecoverDroppedRunes();
+
+// Shop
+bool purchased = runeSystem.PurchaseItem("healingFlask", defeatedBosses);
+var items = runeSystem.GetShopItems(RuneShopCategory.Consumables, defeatedBosses);
+
+// Events
+runeSystem.OnRunesChanged += (old, current) => Debug.Log($"Runes: {old} → {current}");
+runeSystem.OnStatLeveledUp += (stat, lvl) => Debug.Log($"{stat} is now level {lvl}");
+runeSystem.OnRunesDropped += (amount, pos) => Debug.Log($"Dropped {amount} runes!");
+runeSystem.OnRunesRecovered += amount => Debug.Log($"Recovered {amount} runes!");
+```
+
+#### Creature Elements & Boss Tiers
+```csharp
+// 12 creature elements: Fire, Ice, Lightning, Earth, Wind, Water, Light, Dark, Void, Spirit, Nature, Arcane
+// 7 creature temperaments: Docile, Cautious, Aggressive, Proud, Mythical, Corrupted, Divine
+// 5 evolution tiers: Base, Evolved, Ascended, Mythic, Divine
+// 6 bond ranks: Stranger, Acquaintance, Companion, Partner, Soulbound, Awakened
+// 6 boss tiers: MiniBoss, RegionBoss, DemigodBoss, SecretBoss, FinalBoss, RaidBoss
+// 5 awakening states: Normal, Awakened, Transcended, DivineForm, DarkAwakening
+// 10 anime archetypes: Protagonist, Rival, Mentor, Mysterious, Berserker, Strategist, Healer, Trickster, Noble, Outcast
+// 10 anime battle traits: PlotArmor, FriendshipPower, RivalryBoost, LastStand, Determination, LimitBreak, ElementalMastery, ComboMaster, SpiritLink, DivineProtection
+```
+
+#### Features
+- **Creature Taming**: Capture, bond, evolve, and battle with tamed creatures
+- **Soul Forging**: Craft weapons imbued with creature souls
+- **Rune Inscription**: Create runes and enchantments at crafting stations
+- **Open World**: Explore interconnected regions with dynamic weather and day/night cycles
+- **Sites of Grace**: Rest points for healing, fast travel, and stat leveling
+- **Boss Encounters**: Multi-phase soulslike bosses with weak points and stagger mechanics
+- **Anime Transformations**: Awakening system with multiple transformation tiers
+- **Battle Traits**: Anime-inspired combat traits (Plot Armor, Friendship Power, etc.)
+- **Character Relationships**: Build bonds between party members for combo ultimates
+- **Rune Economy**: Risk/reward death mechanics, stat leveling, and rune shops
+- **Save System**: All systems include save/load data structures
 
 ---
 
